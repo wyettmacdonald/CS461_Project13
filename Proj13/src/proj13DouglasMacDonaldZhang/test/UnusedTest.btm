@@ -1,0 +1,37 @@
+/*
+*
+*/
+
+class Main{
+	String meh;
+
+	void blah(){
+		var goo = "Mah";
+		var arg = 0;
+		arg = 10;
+		var apples = 10;
+		var airplanes = "I could really use a wish right now";
+		meh = "string";
+		meh = "nice one";
+		var meh2 = meh;
+		var i = 0;
+		for(i; i < 10; i++) {
+			i = 5;
+			meh = "something";
+		}
+		while(i < 10) {
+			i++;
+			meh = "something else";
+		}	
+	}
+	
+
+	void g(){
+		blah();
+	}
+	void ananas (){ //IT's French for pineapple and I'm not that smart
+		
+	}
+	
+	
+}
