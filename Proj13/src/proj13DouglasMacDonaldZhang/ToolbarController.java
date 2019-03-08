@@ -83,11 +83,11 @@ public class ToolbarController {
      * Handles actions for scan or scanParse buttons
      * @param method type of button clicked on the toolbar
      */
-    public void handleScanOrScanParse(String method){
+    public void handleScanOrScanParse(String method, boolean errorMode, String additionalFunc){
         if(method.equals("scan")){
             this.handleScan();
         }else{
-            this.handleParsing(method, true);
+            this.handleParsing(method, errorMode, additionalFunc);
         }
     }
 
@@ -106,41 +106,7 @@ public class ToolbarController {
     }
 
 
-    //TODO update every time it's saved
-    public void handleSuggestions(){
 
-        CodeArea curCodeArea = codeTabPane.getCodeArea();
-        String beginning = curCodeArea.getSelectedText();
-        if(beginning.length() < 1){
-            return;
-        }
-        handleParsing("semanticCheck", false);
-        if(ast != null) {
-            System.out.println("AST isn't null");
-            FindIDsVisitor idVisitor = new FindIDsVisitor(classMap);
-            ArrayList<IdentifierInfo> idList = idVisitor.collectIdentifiers(ast);
-            System.out.println("Found " + idList.size() + " ids");
-            findPossibleVars(idList, beginning, curCodeArea); //TODO - MAKE SURE THIS WORKS WHEN YOU SWITCH TABS
-        }
-
-    }
-
-
-    public void findPossibleVars(ArrayList<IdentifierInfo> idList, String beginning, CodeArea curCodeArea){
-        ArrayList<IdentifierInfo> possibleNames = new ArrayList<IdentifierInfo>();
-        idList.forEach((idInfo) -> {
-               if(idInfo.getName().startsWith(beginning)){
-                    possibleNames.add(idInfo);
-                    System.out.println("Suggestions " + idInfo.getName());
-                }
-            }
-         );
-
-        //TODO add a way to dismiss the context menu
-        SuggestionsContextMenu suggestionsMenu = new SuggestionsContextMenu(possibleNames, curCodeArea);
-        suggestionsMenu.show(curCodeArea, Side.RIGHT, curCodeArea.getCaretPosition(), curCodeArea.getCaretColumn());
-
-    }
 
     /**
      * creates a new finder thread for parsing the AST.
@@ -148,7 +114,7 @@ public class ToolbarController {
      * default case draws the AST
      * @param method type of finder being executed
      */
-    public void handleParsing(String method, boolean errorMode){
+    public void handleParsing(String method, boolean errorMode, String additionalFunc){
         this.parseIsDone = false;
         new Thread (()->{
             ParseTask parseTask = new ParseTask();
@@ -217,6 +183,22 @@ public class ToolbarController {
                                     }
                                 });
                             }
+
+                            if(additionalFunc != null){
+                                switch (additionalFunc) {
+                                    case "uses":
+                                        handleFindUsesButtonAction();
+                                        break;
+
+                                    case "unused":
+                                        handleFindUnusedButtonAction();
+                                        break;
+                                    case "suggestions":
+                                        handleSuggestions();
+                                        break;
+                                }
+
+                            }
                             break;
 
                         case "parseOnly":
@@ -254,21 +236,10 @@ public class ToolbarController {
 
 
     // TODO Have Wyett change this to call handleScanOrScanParse instead to get the save check in
-    public void handleFindUsesButtonAction() { //Original params were Event event, File file
-//        int userResponse = fileMenuController.checkSaveBeforeContinue();
-//        // user select cancel button
-//        if (userResponse == 2) {
-//            return;
-//        }
-//        // user select to save
-//        else if (userResponse == 1) {
-//            fileMenuController.handleSaveAction();
-//        }
-        // run scan and parse in new thread
-
-        handleParsing("semanticCheck", false);
-        Thread findUsesThread = new Thread() {
-            public void run() {
+    public void handleFindUsesButtonAction() {
+        //handleParsing("semanticCheck", false);
+        //Thread findUsesThread = new Thread() {
+            //public void run() {
                 Program root = ast;
 
                 if (root != null) {
@@ -278,13 +249,17 @@ public class ToolbarController {
                     findDeclarationUses.setJavaTabPane(selectedText);
                     findDeclarationUses.handleFindUses(root);
                     Platform.runLater(() -> {
-                        console.appendText("Uses of " + selectedText + ": \n" + findDeclarationUses.getUses());
-                        console.appendText("Finding uses completed successfully \n");
+                        //console.appendText("Uses of " + selectedText + ": \n" + findDeclarationUses.getUses());
+                        //console.appendText("Finding uses completed successfully \n"); It looks like append is getting errors
+
+                    console.writeToConsole("Uses of " + selectedText + ": \n" + findDeclarationUses.getUses(),"output");
+                    console.writeToConsole("Finding uses completed successfully \n","output");
+
                     });
                 }
-            }
-        };
-        findUsesThread.start();
+            //}
+        //};
+        //findUsesThread.start();
     }
 
 
@@ -294,17 +269,60 @@ public class ToolbarController {
 
 
     public void handleFindUnusedButtonAction() {
-        handleParsing("semanticCheck", false);
+        //handleParsing("semanticCheck", false);
 
-        Program root = ast;
-
-        if (root != null) {
+        if (ast != null) {
 //                    drawTree(root, file);
-            FindUnusedVisitor findUnused = new FindUnusedVisitor(classMap);
+            BuildUsesMapVisitor usesMapVisitor = new BuildUsesMapVisitor(classMap);
+            Hashtable<ClassTreeNode, Hashtable<String, IdentifierInfo>> classUsesMap = usesMapVisitor.makeMap(ast);
+            FindUnusedVisitor findUnused = new FindUnusedVisitor(classMap, classUsesMap);
             String unused = findUnused.checkForUnused(ast);
-            ToolbarController.this.console.writeToConsole(unused,  "output");
+            Platform.runLater(() -> {
+                console.writeToConsole(unused, "output");
+            });
 
         }
+    }
+
+
+    //TODO update every time it's saved
+    public void handleSuggestions(){
+
+        CodeArea curCodeArea = codeTabPane.getCodeArea();
+        String beginning = curCodeArea.getSelectedText();
+        if(beginning.length() < 1){
+            return;
+        }
+
+        //handleParsing("semanticCheck", false, "suggestions");
+        if(ast != null) {
+            System.out.println("AST isn't null");
+            FindIDsVisitor idVisitor = new FindIDsVisitor(classMap);
+            ArrayList<IdentifierInfo> idList = idVisitor.collectIdentifiers(ast);
+            System.out.println("Found " + idList.size() + " ids");
+            findPossibleVars(idList, beginning, curCodeArea); //TODO - MAKE SURE THIS WORKS WHEN YOU SWITCH TABS
+        }
+
+    }
+
+
+    public void findPossibleVars(ArrayList<IdentifierInfo> idList, String beginning, CodeArea curCodeArea){
+        ArrayList<IdentifierInfo> possibleNames = new ArrayList<IdentifierInfo>();
+        idList.forEach((idInfo) -> {
+                    if(idInfo.getName().startsWith(beginning)){
+                        possibleNames.add(idInfo);
+                        System.out.println("Suggestions " + idInfo.getName());
+                    }
+                }
+        );
+
+        //TODO add a way to dismiss the context menu
+        Platform.runLater( ()->{
+            SuggestionsContextMenu suggestionsMenu = new SuggestionsContextMenu(possibleNames, curCodeArea);
+            suggestionsMenu.show(curCodeArea, Side.RIGHT, curCodeArea.getCaretPosition(), curCodeArea.getCaretColumn());
+            }
+        );
+
     }
 
 

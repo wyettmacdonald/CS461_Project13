@@ -14,18 +14,16 @@ import proj13DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
 
 public class IdentifierInfo {
     private String name;
-    private ClassTreeNode classNode;
-    private String type; //It should be either Method or Var
+    private ClassTreeNode classNode; //Has no use right now, but I think it could be useful in the future
+    private String type; //It should be either Method, Field, Var, or Class
     private int scopeLevel;
     private int numUses;
     private int lineNum;
 
 
-    public IdentifierInfo(String name, ClassTreeNode classNode, String type, int scopeLevel, int lineNum){
+    public IdentifierInfo(String name, String type, int lineNum){
         this.name = name;
-        this.classNode = classNode;
-        this.type = type; //It should be either Method or Var
-        this.scopeLevel = scopeLevel;
+        this.type = type;
         this.numUses = 0;
         this.lineNum = lineNum;
     }
@@ -57,5 +55,13 @@ public class IdentifierInfo {
 
     public void setNumUses(int numUses) {
         this.numUses = numUses;
+    }
+
+    public void setClassNode(ClassTreeNode classNode) {
+        this.classNode = classNode;
+    }
+
+    public void setScopeLevel(int scopeLevel) {
+        this.scopeLevel = scopeLevel;
     }
 }

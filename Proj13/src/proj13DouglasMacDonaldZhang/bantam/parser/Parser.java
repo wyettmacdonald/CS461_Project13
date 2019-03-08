@@ -737,6 +737,7 @@ public class Parser
             updateCurrentToken();
             ExprList argument = parseArguments();
             this.checkToken(RPAREN, "When parsing varExpr, \")\" expected");
+            //System.out.println("Dispatch Expr: " + suffix + " " + identifier);
             tempExpr = new DispatchExpr(this.currentToken.position, suffix, identifier, argument);
         }
         else{

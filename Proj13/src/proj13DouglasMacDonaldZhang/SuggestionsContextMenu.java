@@ -19,6 +19,8 @@ public class SuggestionsContextMenu extends ContextMenu {
             suggestionItem.setText(suggestion.getType() + " " + suggestion.getName());
             suggestionItem.setOnAction(event -> replace(codeArea, suggestion.getName()));
             this.getItems().add(suggestionItem);
+            this.setAutoHide(true);
+            this.setHideOnEscape(true);
         });
 
 

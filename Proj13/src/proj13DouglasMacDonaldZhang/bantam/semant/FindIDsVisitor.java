@@ -27,7 +27,6 @@ public class FindIDsVisitor extends Visitor {
     /**
      * Constructor for FindIDsVisitor
      * @param map is the class map from which to get the class nodes which need symbol tables
-     * @param handler is the error handler which will log any errors found along the way
      */
     public FindIDsVisitor(Hashtable<String, ClassTreeNode> map){
         classMap = map;
@@ -49,7 +48,7 @@ public class FindIDsVisitor extends Visitor {
      */
     public Object visit(Class_ node){
         currentClass = node.getName();
-        idsMap.add(new IdentifierInfo(currentClass, null, "Class", 0, node.getLineNum())); //Don't care about it, null for now TODO fix this
+        idsMap.add(new IdentifierInfo(currentClass,"Class", node.getLineNum()));
         super.visit(node);
         return null;
     }
@@ -61,7 +60,7 @@ public class FindIDsVisitor extends Visitor {
     public Object visit(Field node){
         ClassTreeNode treeNode = classMap.get(currentClass);
         String fieldName  = node.getName();
-        IdentifierInfo fieldInfo = new IdentifierInfo(node.getName(), treeNode, "Var", 0, node.getLineNum());
+        IdentifierInfo fieldInfo = new IdentifierInfo(node.getName(), "Var", node.getLineNum());
         idsMap.add(fieldInfo);
         return null;
     }
@@ -74,7 +73,7 @@ public class FindIDsVisitor extends Visitor {
      */
     public Object visit(Method node){
         ClassTreeNode treeNode = classMap.get(currentClass);
-        IdentifierInfo methodInfo = new IdentifierInfo(node.getName(), treeNode, "Method", 0, node.getLineNum());
+        IdentifierInfo methodInfo = new IdentifierInfo(node.getName(), "Method", node.getLineNum());
         idsMap.add(methodInfo);
 
         //treeNode.getVarSymbolTable().enterScope();
@@ -85,8 +84,7 @@ public class FindIDsVisitor extends Visitor {
     public Object visit(Formal node){
         ClassTreeNode treeNode = classMap.get(currentClass);
         String paramName  = node.getName();
-        IdentifierInfo paramInfo = new IdentifierInfo(node.getName(), treeNode, "Var",
-                treeNode.getVarSymbolTable().getCurrScopeLevel(), node.getLineNum());
+        IdentifierInfo paramInfo = new IdentifierInfo(node.getName(), "Var", node.getLineNum());
         idsMap.add(paramInfo);
         return null;
     }
@@ -97,8 +95,7 @@ public class FindIDsVisitor extends Visitor {
     public Object visit(DeclStmt node){
         ClassTreeNode treeNode = classMap.get(currentClass);
         String varName = node.getName();
-        IdentifierInfo varInfo = new IdentifierInfo(node.getName(), treeNode, "Var",
-                treeNode.getVarSymbolTable().getCurrScopeLevel(), node.getLineNum());
+        IdentifierInfo varInfo = new IdentifierInfo(node.getName(), "Var", node.getLineNum());
         //System.out.println("It's been entered as " + varName + " " + varInfo.getScopeLevel());
         idsMap.add(varInfo);
         super.visit(node);

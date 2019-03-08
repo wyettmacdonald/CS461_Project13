@@ -461,7 +461,7 @@ public class MasterController {
      */
     @FXML
     public void handleScan(){
-        this.handleScanOrScanParse("scan");
+        this.handleScanOrScanParse("scan", true, null);
     }
 
     /**
@@ -469,7 +469,7 @@ public class MasterController {
      */
     @FXML
     private void handleScanAndParse(){
-        this.handleScanOrScanParse("scanParse");
+        this.handleScanOrScanParse("scanParse", true, null);
     }
 
     /**
@@ -479,10 +479,10 @@ public class MasterController {
      * @param method is the string that indicates whether it should be just scanning, scanning and parsing,
      * or scanning and parsing followed by a visitor performing some action
      */
-    private void handleScanOrScanParse(String method){
+    private void handleScanOrScanParse(String method, boolean errorMode, String additionalFunc){
         Tab curTab = this.codeTabPane.getSelectionModel().getSelectedItem();
         if(this.codeTabPane.getSaveStatus(curTab)) {
-            toolbarController.handleScanOrScanParse(method);
+            toolbarController.handleScanOrScanParse(method, errorMode, additionalFunc);
         } else {
             String saveResult = this.askSaveDialog(null,
                     "Do you want to save your changes?",null);
@@ -490,7 +490,7 @@ public class MasterController {
                 case("yesButton"):
                     boolean isNotCancelled = fileController.handleSave();
                     if(isNotCancelled){
-                        toolbarController.handleScanOrScanParse(method);
+                        toolbarController.handleScanOrScanParse(method, errorMode, additionalFunc);
                     }
                     break;
                 case("noButton"):
@@ -499,7 +499,7 @@ public class MasterController {
                         this.console.writeToConsole("File must be saved to scan \n","Error");
                         return;
                     }
-                    toolbarController.handleScanOrScanParse(method);
+                    toolbarController.handleScanOrScanParse(method, errorMode, additionalFunc);
                     return;
                 case("cancelButton"):
                     return;
@@ -513,7 +513,7 @@ public class MasterController {
      */
     @FXML
     private void handleSemanticCheck(){
-        this.handleScanOrScanParse("semanticCheck");
+        this.handleScanOrScanParse("semanticCheck", true, null);
 
     }
 
@@ -525,6 +525,10 @@ public class MasterController {
      */
     @FXML
     public void handleFindUsesButtonAction(Event event) {
+
+        //Hopefully, I don't totally break Wyett's code
+        //TODO make sure this works
+        handleScanOrScanParse("semanticCheck", false, "uses");
         this.toolbarController.handleFindUsesButtonAction();
     }
 
@@ -538,6 +542,8 @@ public class MasterController {
      */
     @FXML
     public void handleFindUnusedButtonAction(Event event) {
+
+        handleScanOrScanParse("semanticCheck", false, "unused");
         this.toolbarController.handleFindUnusedButtonAction();
     }
 
@@ -551,7 +557,9 @@ public class MasterController {
      */
     @FXML
     public void handleSuggestions(Event event) {
-        this.toolbarController.handleSuggestions();
+        //I don't want it to ask for it to be saved (because it's probably semantically incorrect at that point)
+        //So not running handleScanOrScanParsing
+        toolbarController.handleScanOrScanParse("semanticCheck", false, "suggestions");
     }
 
 
