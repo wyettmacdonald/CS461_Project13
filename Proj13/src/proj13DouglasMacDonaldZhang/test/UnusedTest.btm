@@ -18,14 +18,18 @@ class Main extends Parent{
 		for(i; i < 10; i++) {
 			i = 5;
 			meh = "something";
+			var citron = "Mah";
+			citron = "I was used!";
+			airplanes = "could we pretend that airplanes";
 		}
 		while(i < 10) {
 			i++;
 			meh = "something else";
+			var citron = "Doodoo";
 		}
 
 		
-		god(); //This works!
+		super.god(); //This works!
 		super.parentStr = "Me"; //This works too!
 
 		var test = new Test();

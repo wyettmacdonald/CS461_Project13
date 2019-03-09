@@ -478,6 +478,9 @@ public class MasterController {
      * If canceled, breaks. If no, works off saved file. If yes, saves first and then moves on to scanning/parsing
      * @param method is the string that indicates whether it should be just scanning, scanning and parsing,
      * or scanning and parsing followed by a visitor performing some action
+     * @param additionalFunc is a String indicating an additional function to be run after semantic analysis.
+     * Options are "uses", "unused", and "suggestions"
+     * Pass in null if no additional functions are needed
      */
     private void handleScanOrScanParse(String method, boolean errorMode, String additionalFunc){
         Tab curTab = this.codeTabPane.getSelectionModel().getSelectedItem();
@@ -529,7 +532,7 @@ public class MasterController {
         //Hopefully, I don't totally break Wyett's code
         //TODO make sure this works
         handleScanOrScanParse("semanticCheck", false, "uses");
-        this.toolbarController.handleFindUsesButtonAction();
+        //this.toolbarController.handleFindUses();
     }
 
 
@@ -544,7 +547,7 @@ public class MasterController {
     public void handleFindUnusedButtonAction(Event event) {
 
         handleScanOrScanParse("semanticCheck", false, "unused");
-        this.toolbarController.handleFindUnusedButtonAction();
+       // this.toolbarController.handleFindUnused();
     }
 
 
