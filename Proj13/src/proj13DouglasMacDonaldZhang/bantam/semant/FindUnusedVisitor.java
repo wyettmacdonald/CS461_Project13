@@ -24,8 +24,14 @@ public class FindUnusedVisitor extends Visitor {
     Hashtable<ClassTreeNode, Hashtable<String, IdentifierInfo>> classUsesMap;
     Hashtable<String, IdentifierInfo> currentUsesMap;
     String unused; //This is a field because it's the only way I've found so far to handle modifying in a for each while using a lambda
-    int varScopeLevel;
+
+    //Shouldn't be needed anymore, not deleting just in case I messed up
+    // since I invented and implemented its replacement literally 15 minutes ago -Tia
+    //int varScopeLevel;
     ArrayList<String> scopeNameList;
+
+    int varScopeNum;
+    ArrayList<String> scopePath;
 
     /*
      * Constructor for FindUnusedVistor
@@ -72,11 +78,15 @@ public class FindUnusedVisitor extends Visitor {
         currentUsesMap = classUsesMap.get(treeNode);
         System.out.println("Map for " + currentClass + " is " + currentUsesMap);
 
-        varScopeLevel = 0;
+        //varScopeLevel = 0;
+
+        varScopeNum = 0;
+
+        scopePath = new ArrayList<>();
 
         super.visit(node);
 
-        varScopeLevel = 0;
+        //varScopeLevel = 0;
         return null;
     }
 
@@ -88,9 +98,16 @@ public class FindUnusedVisitor extends Visitor {
      */
     public Object visit(Method node){
 
-        varScopeLevel ++;
+        varScopeNum ++;
+        String scopeName = scopeNameList.get(varScopeNum);
+        scopePath.add(scopeName);
+
+        //varScopeLevel ++;
         super.visit(node);
-        varScopeLevel --;
+        //varScopeLevel --;
+
+        scopePath.remove(scopeName);
+
         return null;
     }
 
@@ -100,10 +117,17 @@ public class FindUnusedVisitor extends Visitor {
      * @param node is the ForStmt node to be visited
      */
     public Object visit(ForStmt node){
-        varScopeLevel ++;
-        super.visit(node);
-        varScopeLevel --;
 
+        varScopeNum ++;
+        String scopeName = scopeNameList.get(varScopeNum);
+        scopePath.add(scopeName);
+
+
+        //varScopeLevel ++;
+        super.visit(node);
+        //varScopeLevel --;
+
+        scopePath.remove(scopeName);
 
         return null;
     }
@@ -114,10 +138,19 @@ public class FindUnusedVisitor extends Visitor {
      */
     public Object visit(WhileStmt node){
 
-        varScopeLevel ++;
+        varScopeNum ++;
+        String scopeName = scopeNameList.get(varScopeNum);
+        scopePath.add(scopeName);
+
+
+
+        //varScopeLevel ++;
 
         super.visit(node);
-        varScopeLevel--;
+        //varScopeLevel--;
+
+        scopePath.remove(scopeName);
+
         return null;
     }
 
@@ -226,12 +259,12 @@ public class FindUnusedVisitor extends Visitor {
      */
     private void incrementVarCount(Hashtable<String, IdentifierInfo> map, String varName){
         IdentifierInfo varInfo = null;
-        int scopeTracker = varScopeLevel;
+        int scopeTracker = scopePath.size() - 1;
         System.out.println("Map " + map);
-        System.out.println("Checking scope level "+ varScopeLevel + " " + varName);
+        System.out.println("Checking scope level "+ scopeTracker + " " + varName);
         while(scopeTracker > -1) {
             //System.out.println("Checking " + varName  + " " + varScopeLevel);
-            String curScopeName = scopeNameList.get(scopeTracker);
+            String curScopeName = scopePath.get(scopeTracker);
             System.out.println("Testing " + curScopeName +  " " + varName);
             varInfo = map.get(varName + " " + curScopeName );
             if(varInfo != null){

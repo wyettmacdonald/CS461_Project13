@@ -529,8 +529,6 @@ public class MasterController {
     @FXML
     public void handleFindUsesButtonAction(Event event) {
 
-        //Hopefully, I don't totally break Wyett's code
-        //TODO make sure this works
         handleScanOrScanParse("semanticCheck", false, "uses");
         //this.toolbarController.handleFindUses();
     }

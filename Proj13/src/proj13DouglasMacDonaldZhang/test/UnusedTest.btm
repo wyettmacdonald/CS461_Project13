@@ -1,5 +1,7 @@
 /*
-*
+* Tia Zhang and Wyett MacDonald
+* CS461 Project 13 Test File
+* Test file for finding unused (and a bit for finding uses)
 */
 
 class Main extends Parent{
@@ -19,13 +21,14 @@ class Main extends Parent{
 			i = 5;
 			meh = "something";
 			var citron = "Mah";
-			citron = "I was used!";
+			//citron = "I was used!";
 			airplanes = "could we pretend that airplanes";
 		}
 		while(i < 10) {
 			i++;
 			meh = "something else";
 			var citron = "Doodoo";
+			citron = "Baby Shark";
 		}
 
 		
@@ -42,6 +45,15 @@ class Main extends Parent{
 
 	void g(){
 		blah();
+		var mommyShark = "Doodoo";
+		mommyShark = "Doodoo doodoo";
+		var i = 0;
+		while(i < 10) {
+			i++;
+			var babyShark = "Doodoo";
+			babyShark = "Doodoo doodoo";
+			var daddyShark = "Doodoo";
+		}
 	}
 	void ananas (){ //It's French for pineapple and it was the first a-word I thought of
 		
