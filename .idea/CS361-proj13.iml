@@ -10,19 +10,16 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/Proj13/src/proj13DouglasMacDonaldZhang/include/antlr-4.7.1-complete.jar!/" />
+          <root url="jar://$MODULE_DIR$/Proj13/src/proj15DouglasMacDonaldZhang/include/antlr-4.7.1-complete.jar!/" />
+          <root url="jar://$MODULE_DIR$/Proj13/src/proj15DouglasMacDonaldZhang/include/richtextfx-fat-0.9.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/Proj13/src/proj15DouglasMacDonaldZhang/include/Mars4_5.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/Proj13/src/proj13DouglasMacDonaldZhang/include/richtextfx-fat-0.9.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
+        <JAVADOC>
+          <root url="jar://$MODULE_DIR$/Proj13/src/proj15DouglasMacDonaldZhang/include/Mars4_5.jar!/docs" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/Proj13/src/proj15DouglasMacDonaldZhang/include/Mars4_5.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
   </component>
