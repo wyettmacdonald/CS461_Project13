@@ -113,6 +113,10 @@ public class ToolbarController {
      * Once AST is parsed, checks the type of finder and then passes the AST to the correct one.
      * default case draws the AST
      * @param method type of finder being executed
+     * @param errorMode dictates whether errors from semantic analysis should be printed
+     * @param additionalFunc is a String indicating an additional function to be run after semantic analysis.
+     * Options are "uses", "unused", and "suggestions"
+     * Pass in null if no additional functions are needed
      */
     public void handleParsing(String method, boolean errorMode, String additionalFunc){
         this.parseIsDone = false;
@@ -134,45 +138,17 @@ public class ToolbarController {
                             semantAnalyzer.analyze(AST);
                             classMap = semantAnalyzer.getClassMap();
                             Hashtable<String, ClassTreeNode> map = semantAnalyzer.getClassMap();
-                            //Useful debugging code, but it crashes if there's a cycle
-                            /*map.forEach( (nodeName, node) -> {
-
-                                Platform.runLater(()->this.console.writeToConsole(
-                                        "The name is " + nodeName + "\n",
-                                        "Output"));
-                                if(!nodeName.equals("Object")) {
-                                    Platform.runLater(() -> this.console.writeToConsole(
-                                            "Parent is " + node.getParent().getName() + "\n",
-                                            "Output"));
-                                }
-                                if(node.getNumDescendants() > 0) {
-                                    Iterator<ClassTreeNode> childrenIt = node.getChildrenList();
-                                    while (childrenIt.hasNext()) {
-                                        ClassTreeNode child = childrenIt.next();
-                                        Platform.runLater(() -> this.console.writeToConsole(
-                                                "One child of " + nodeName + " is " + child.getName() + "\n",
-                                                "Output"));
-                                    }
-                                }
-                                else{
-                                    Platform.runLater(() -> this.console.writeToConsole(
-                                            "No children" + "\n",
-                                            "Output"));
-                                }
-
-                            });*/
 
 
 
 
-                            if(errorMode) {
                                 Platform.runLater(() -> {
                                     ToolbarController.this.console.writeToConsole("Semantic Analysis Failed\n", "Error");
                                     ToolbarController.this.console.writeToConsole("There were: " +
                                             errorHandler.getErrorList().size() + " semantic errors in " +
                                             ToolbarController.this.codeTabPane.getFileName() + "\n", "Output");
 
-                                    if (errorHandler.errorsFound()) {
+                                    if (errorHandler.errorsFound() && errorMode) {
                                         List<Error> errorList = errorHandler.getErrorList();
                                         Iterator<Error> errorIterator = errorList.iterator();
                                         ToolbarController.this.console.writeToConsole("\n", "Error");
@@ -182,16 +158,16 @@ public class ToolbarController {
                                         }
                                     }
                                 });
-                            }
+
 
                             if(additionalFunc != null){
                                 switch (additionalFunc) {
                                     case "uses":
-                                        handleFindUsesButtonAction();
+                                        handleFindUses();
                                         break;
 
                                     case "unused":
-                                        handleFindUnusedButtonAction();
+                                        handleFindUnused();
                                         break;
                                     case "suggestions":
                                         handleSuggestions();
@@ -235,31 +211,24 @@ public class ToolbarController {
     }
 
 
-    // TODO Have Wyett change this to call handleScanOrScanParse instead to get the save check in
-    public void handleFindUsesButtonAction() {
-        //handleParsing("semanticCheck", false);
-        //Thread findUsesThread = new Thread() {
-            //public void run() {
-                Program root = ast;
+    /*
+    * Find and prints all the usages of a user-selected highlighted variable in the console
+    * Must be called in a separate thread from the main.
+    * Semantic analysis must've occurred before this happens
+    */
+    public void handleFindUses() {
 
-                if (root != null) {
-//                    drawTree(root, file);
-                    String selectedText = codeTabPane.getCodeArea().getSelectedText();
-                    FindDeclarationUsesVisitor findDeclarationUses = new FindDeclarationUsesVisitor();
-                    findDeclarationUses.setJavaTabPane(selectedText);
-                    findDeclarationUses.handleFindUses(root);
-                    Platform.runLater(() -> {
-                        //console.appendText("Uses of " + selectedText + ": \n" + findDeclarationUses.getUses());
-                        //console.appendText("Finding uses completed successfully \n"); It looks like append is getting errors
+        if (ast != null) { //Just in case and to make it more flexible
+            String selectedText = codeTabPane.getCodeArea().getSelectedText();
+            FindDeclarationUsesVisitor findDeclarationUses = new FindDeclarationUsesVisitor();
+            findDeclarationUses.setJavaTabPane(selectedText);
+            findDeclarationUses.handleFindUses(ast);
+            Platform.runLater(() -> {
+            console.writeToConsole("Uses of " + selectedText + ": \n" + findDeclarationUses.getUses(),"output");
+            console.writeToConsole("Finding uses completed successfully \n","output");
 
-                    console.writeToConsole("Uses of " + selectedText + ": \n" + findDeclarationUses.getUses(),"output");
-                    console.writeToConsole("Finding uses completed successfully \n","output");
-
-                    });
-                }
-            //}
-        //};
-        //findUsesThread.start();
+            });
+        }
     }
 
 
@@ -267,15 +236,18 @@ public class ToolbarController {
 
 
 
-
-    public void handleFindUnusedButtonAction() {
-        //handleParsing("semanticCheck", false);
+    /*
+     * Find and prints all the unused identifiers in a program.
+     * Must be called in a separate thread from the main.
+     * Semantic analysis must've occurred before this happens
+     */
+    public void handleFindUnused() {
 
         if (ast != null) {
-//                    drawTree(root, file);
             BuildUsesMapVisitor usesMapVisitor = new BuildUsesMapVisitor(classMap);
             Hashtable<ClassTreeNode, Hashtable<String, IdentifierInfo>> classUsesMap = usesMapVisitor.makeMap(ast);
-            FindUnusedVisitor findUnused = new FindUnusedVisitor(classMap, classUsesMap);
+            ArrayList<String> scopeNamesList = usesMapVisitor.getScopeNameList();
+            FindUnusedVisitor findUnused = new FindUnusedVisitor(classMap, classUsesMap, scopeNamesList);
             String unused = findUnused.checkForUnused(ast);
             Platform.runLater(() -> {
                 console.writeToConsole(unused, "output");
@@ -284,8 +256,15 @@ public class ToolbarController {
         }
     }
 
-
-    //TODO update every time it's saved
+    /*
+    * When the user has selected text, finds any identifiers (classes, methods, variables).that has the same beginning
+    * and displays them as a context menu to the side so it does not obstruct their view. Selecting any of those
+    * items will autocomplete the highlighted text with the full version of its name.
+    * The context menu can be closed by clicking on a diff section of the tab pane (not on the code area)
+    * or hitting the escape key.
+    * Must be called in a separate thread from the main.
+    * Semantic analysis must've occurred before this happens
+    */
     public void handleSuggestions(){
 
         CodeArea curCodeArea = codeTabPane.getCodeArea();
@@ -294,19 +273,25 @@ public class ToolbarController {
             return;
         }
 
-        //handleParsing("semanticCheck", false, "suggestions");
-        if(ast != null) {
-            System.out.println("AST isn't null");
+        if(ast != null) { //Just in case. Should never happen, but just in case and make it more flexible
+            //System.out.println("AST isn't null");
             FindIDsVisitor idVisitor = new FindIDsVisitor(classMap);
             ArrayList<IdentifierInfo> idList = idVisitor.collectIdentifiers(ast);
             System.out.println("Found " + idList.size() + " ids");
-            findPossibleVars(idList, beginning, curCodeArea); //TODO - MAKE SURE THIS WORKS WHEN YOU SWITCH TABS
+            findPossibleVars(idList, beginning, curCodeArea);
         }
 
     }
 
-
-    public void findPossibleVars(ArrayList<IdentifierInfo> idList, String beginning, CodeArea curCodeArea){
+    /*
+    * Finds all the identifiers that begins with the same letters as the given string
+    * Makes a menu to display those identifiers that match.
+    * @param idList is an array list of all the identifiers to check. It should contain IdentifierInfo objects
+    * @param beginning is the String that should be matched with existing identifiers
+    * @param curCodeArea is the code area that the selected text is in
+    * This function must be run in a separate thread from the main
+    */
+    private void findPossibleVars(ArrayList<IdentifierInfo> idList, String beginning, CodeArea curCodeArea){
         ArrayList<IdentifierInfo> possibleNames = new ArrayList<IdentifierInfo>();
         idList.forEach((idInfo) -> {
                     if(idInfo.getName().startsWith(beginning)){
@@ -316,7 +301,6 @@ public class ToolbarController {
                 }
         );
 
-        //TODO add a way to dismiss the context menu
         Platform.runLater( ()->{
             SuggestionsContextMenu suggestionsMenu = new SuggestionsContextMenu(possibleNames, curCodeArea);
             suggestionsMenu.show(curCodeArea, Side.RIGHT, curCodeArea.getCaretPosition(), curCodeArea.getCaretColumn());
