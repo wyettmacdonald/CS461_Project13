@@ -34,6 +34,7 @@ public class Console extends StyleClassedTextArea {
     private ToolbarController toolbarController;
     //The index of the first character of the command in the console text string
     private int commandStartIndex;
+    private boolean processStatus; //Whether there's a process running, ie, compilation - Tia added for Proj 15
 
     /**
      *  This is the constructor, setting up the console
@@ -118,15 +119,23 @@ public class Console extends StyleClassedTextArea {
         //If the user pressed Enter
         if (e.getCode() == KeyCode.ENTER) {
             e.consume();
+            //System.out.println("Enter");
             //If Enter was pressed in the middle of a command append a new line to the end
             if (this.getCaretPosition() >= commandStartIndex) {
                 //If there is a process running, set the receivedCommand field to true
                 if (this.getProcessStatus()){
                     this.receivedCommand = true;
                 }
-                this.appendText("\n");
+                //this.appendText("\n"); //Don't know why there are two new lines, leaving this comment in case there's a good reason
                 this.requestFollowCaret();
             }
+
+            //If there is a process running, set the receivedCommand field to true
+            if (this.getProcessStatus()){
+                this.receivedCommand = true;
+            }
+            this.appendText("\n");
+            this.requestFollowCaret();
         }
 
         //If the user pressed back space.
@@ -168,6 +177,17 @@ public class Console extends StyleClassedTextArea {
      * @return the boolean value indicating if a process running
      */
     private boolean getProcessStatus(){
-        return !(this.toolbarController.scanIsDone()&&this.toolbarController.parseIsDone());
+        return processStatus;
     }
+
+
+    /**
+     * get the process status for the toolbarController
+     * @return the boolean value indicating if a process running
+     */
+    public void setProcessStatus(boolean newStatus){
+         processStatus = newStatus;
+    }
+
+
 }

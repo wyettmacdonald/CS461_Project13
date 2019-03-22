@@ -95,9 +95,16 @@
         </Menu>
     </MenuBar>
     <ToolBar>
+
         <Button fx:id ="scanButton" onAction="#handleScan" text = "Scan"/>
         <Button fx:id ="scanParseButton" onAction = "#handleScanAndParse" text = "Scan and Parse"/>
         <Button fx:id ="scanParseCheckButton" onAction = "#handleSemanticCheck" text = "Scan, Parse, and Check"/>
+
+        <Button fx:id ="assembleButton" onAction="#handleAssemble" text = "Assemble"/>
+        <Button fx:id ="assembleAndRunButton" onAction = "#handleAssembleAndRun" text = "Assemble and Run"/>
+        <Button fx:id ="stopButton" onAction = "#handleStop" text = "Stop"/>
+
+
         <Button text="Find Uses" fx:id="findUsesButton" onAction="#handleFindUsesButtonAction" />
         <Button text="Find Unused" fx:id="findUnusedButton" onAction="#handleFindUnusedButtonAction" />
         <Button text="Suggest Names" fx:id="suggestNamesButton" onAction="#handleSuggestions" />

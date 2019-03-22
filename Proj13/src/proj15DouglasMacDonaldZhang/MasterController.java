@@ -32,6 +32,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import javafx.event.Event;
@@ -66,6 +67,11 @@ public class MasterController {
     @FXML private Button scanButton;
     @FXML private Button scanParseButton;
     @FXML private Button scanParseCheckButton;
+
+    @FXML private Button assembleButton; //TODO DISABLE UNLESS IT'S A MIPS FILE - STATE PATTERN
+    @FXML private Button assembleAndRunButton;
+    @FXML private Button stopButton;
+
     @FXML private Button findUsesButton;
     @FXML private Button findUnusedButton;
     @FXML private Button suggestNamesButton;
@@ -142,6 +148,9 @@ public class MasterController {
             this.scanButton.setDisable(false);
             this.scanParseButton.setDisable(false);
             this.scanParseCheckButton.setDisable(false);
+            this.assembleButton.setDisable(false);
+            this.assembleAndRunButton.setDisable(false);
+            this.stopButton.setDisable(false);
             this.findUsesButton.setDisable(false);
             this.findUnusedButton.setDisable(false);
             this.suggestNamesButton.setDisable(false);
@@ -160,16 +169,65 @@ public class MasterController {
         File file = fileController.handleOpenDialog();
         fileController.handleOpen(file);
         if(toolbarController.scanIsDone() && !this.codeTabPane.getTabs().isEmpty()) {
-            this.scanButton.setDisable(false);
+            /*this.scanButton.setDisable(false); //Leaving these here in case I screwed up, to make reverting easy -Tia
             this.scanParseButton.setDisable(false);
             this.scanParseCheckButton.setDisable(false);
+            this.assembleButton.setDisable(false);
+            this.assembleAndRunButton.setDisable(false);
+            this.stopButton.setDisable(false);
             this.findUsesButton.setDisable(false);
             this.findUnusedButton.setDisable(false);
-            this.suggestNamesButton.setDisable(false);
+            this.suggestNamesButton.setDisable(false);*/
+
+            if(file.getName().endsWith(".asm") || file.getName().endsWith(".s")) {
+
+               setMipsButtons();
+            }
+            else if(file.getName().endsWith(".btm")){
+               setBantamButtons();
+            }
 
         }
         this.updateStructureView();
         this.createDirectoryTree();
+    }
+
+
+    /*
+    * Helper method that disables Bantam-only buttons and enables the MIPS only ones on the toolbar
+    */
+    public void setMipsButtons(){
+        //Enable MIPS only options
+        this.assembleButton.setDisable(false);
+        this.assembleAndRunButton.setDisable(false);
+        this.stopButton.setDisable(false);
+
+        //Disabling Bantam only
+        this.scanButton.setDisable(true);
+        this.scanParseButton.setDisable(true);
+        this.scanParseCheckButton.setDisable(true);
+        this.findUsesButton.setDisable(true);
+        this.findUnusedButton.setDisable(true);
+        this.suggestNamesButton.setDisable(true);
+    }
+
+
+    /*
+     * Helper method that enables Bantam-only buttons and disables the MIPS only ones on the toolbar
+     */
+    public void setBantamButtons(){
+        //Enable Bantam options
+        this.scanButton.setDisable(false);
+        this.scanParseButton.setDisable(false);
+        this.scanParseCheckButton.setDisable(false);
+        this.findUsesButton.setDisable(false);
+        this.findUnusedButton.setDisable(false);
+        this.suggestNamesButton.setDisable(false);
+
+        //Disabling MIPS only
+        this.assembleButton.setDisable(true);
+        this.assembleAndRunButton.setDisable(true);
+        this.stopButton.setDisable(true);
     }
 
     /**
@@ -443,6 +501,9 @@ public class MasterController {
         this.scanButton.setDisable(true);
         this.scanParseButton.setDisable(true);
         this.scanParseCheckButton.setDisable(true);
+        this.assembleButton.setDisable(true);
+        this.assembleAndRunButton.setDisable(true);
+        this.stopButton.setDisable(true);
         this.findUsesButton.setDisable(true);
         this.findUnusedButton.setDisable(true);
         this.suggestNamesButton.setDisable(true);
@@ -487,27 +548,13 @@ public class MasterController {
         if(this.codeTabPane.getSaveStatus(curTab)) {
             toolbarController.handleScanOrScanParse(method, errorMode, additionalFunc);
         } else {
-            String saveResult = this.askSaveDialog(null,
-                    "Do you want to save your changes?",null);
-            switch (saveResult) {
-                case("yesButton"):
-                    boolean isNotCancelled = fileController.handleSave();
-                    if(isNotCancelled){
-                        toolbarController.handleScanOrScanParse(method, errorMode, additionalFunc);
-                    }
-                    break;
-                case("noButton"):
-                    if (this.codeTabPane.getFileName() == null) {
-                        this.console.writeToConsole("File Not Found: " + curTab.getText() +"\n","Error");
-                        this.console.writeToConsole("File must be saved to scan \n","Error");
-                        return;
-                    }
-                    toolbarController.handleScanOrScanParse(method, errorMode, additionalFunc);
-                    return;
-                case("cancelButton"):
-                    return;
+            String saveResult = askIfSave(curTab);
+            if("unsaved".equals(saveResult) || "saved".equals(saveResult)){
+                toolbarController.handleScanOrScanParse(method, errorMode, additionalFunc);
             }
+
         }
+
     }
 
 
@@ -545,13 +592,13 @@ public class MasterController {
     public void handleFindUnusedButtonAction(Event event) {
 
         handleScanOrScanParse("semanticCheck", false, "unused");
-       // this.toolbarController.handleFindUnused();
+        // this.toolbarController.handleFindUnused();
     }
 
 
 
     /**
-     * Calls the method that handles the Find Unused button action from
+     * Calls the method that handles the Suggest Names button action from
      * the toolBarController
      *
      * @param event Event object
@@ -559,10 +606,101 @@ public class MasterController {
     @FXML
     public void handleSuggestions(Event event) {
         //I don't want it to ask for it to be saved (because it's probably semantically incorrect at that point)
-        //So not running handleScanOrScanParsing
+        //So not running handleScanOrScanParse here
         toolbarController.handleScanOrScanParse("semanticCheck", false, "suggestions");
     }
 
 
 
+
+    /**
+     * Calls the method that handles the Assemble button action from
+     * the toolBarController
+     *
+     * @param event Event object
+     */
+    @FXML
+    public void handleAssemble(Event event) {
+        Tab curTab = this.codeTabPane.getSelectionModel().getSelectedItem();
+        if(this.codeTabPane.getSaveStatus(curTab)) {
+            File currentFile = codeTabPane.getCurrentFile();
+            //System.out.println(currentFile);
+            toolbarController.handleAssemble(currentFile);
+        }
+        else {
+            String saveResult = askIfSave(curTab);
+            if ("unsaved".equals(saveResult) || "saved".equals(saveResult)) {
+                File currentFile = codeTabPane.getCurrentFile();
+                toolbarController.handleAssemble(currentFile);
+            }
+        }
+
+
+    }
+
+
+
+
+
+    /**
+     * Calls the method that handles the Assemble and Run button action from
+     * the toolBarController
+     *
+     * @param event Event object
+     */
+    @FXML
+    public void handleAssembleAndRun(Event event) {
+        Tab curTab = this.codeTabPane.getSelectionModel().getSelectedItem();
+        if(this.codeTabPane.getSaveStatus(curTab)) {
+            File currentFile = codeTabPane.getCurrentFile();
+            toolbarController.handleAssembleAndRun(currentFile);
+        } else {
+            String saveResult = askIfSave(curTab);
+            if ("unsaved".equals(saveResult) || "saved".equals(saveResult)) {
+                File currentFile = codeTabPane.getCurrentFile();
+                toolbarController.handleAssembleAndRun(currentFile);
+            }
+        }
+    }
+
+
+
+    /**
+     * Calls the method that handles the Assemble and Run button action from
+     * the toolBarController
+     *
+     * @param event Event object
+     */
+    @FXML
+    public void handleStop(Event event) {
+        toolbarController.handleStop();
+    }
+
+
+    /*
+    * Helper method that calls up the save dialogue for a tab, saves if needed, and returns what choice the user made
+    * @param curTab is the Tab which dialogue should be called for. It should've already been determined to be unsaved
+    */
+    private String askIfSave(Tab curTab) {
+
+        String saveResult = this.askSaveDialog(null,
+                "Do you want to save your changes?", null);
+        switch (saveResult) {
+            case ("yesButton"):
+                boolean isNotCancelled = fileController.handleSave();
+                if (isNotCancelled) {
+                    return "saved";
+                }
+                break;
+            case ("noButton"):
+                if (this.codeTabPane.getFileName() == null) {
+                    this.console.writeToConsole("File Not Found: " + curTab.getText() + "\n", "Error");
+                    this.console.writeToConsole("File must be saved to scan \n", "Error");
+                }
+                return "unsaved";
+            case ("cancelButton"):
+                return "canceled";
+        }
+        return "dummy"; //This should never be reached, just needed an else case somewhere to make Java happy
+    }
 }

@@ -7,6 +7,7 @@
 
 package proj15DouglasMacDonaldZhang;
 
+import javafx.event.Event;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -43,14 +44,25 @@ public class CodeTab extends Tab{
         if(filename.endsWith(".asm") || filename.endsWith(".s")) {
             MIPSStyle style = new MIPSStyle();
             this.addCodeArea(content, style);
+            this.setOnSelectionChanged( event -> {
+                if (isSelected()){
+                    masterController.setMipsButtons();
+                }
+            });
         }
-        else {
+        else if(filename.endsWith(".btm")){
             JavaStyle style = new JavaStyle();
             this.addCodeArea(content, style);
+            this.setOnSelectionChanged( event -> {
+                if (isSelected()){
+                    masterController.setBantamButtons();
+                }
+            });
         }
         this.setOnCloseRequest(event -> this.masterController.handleClose(event));
         this.setContextMenu(tabContextMenu);
     }
+
 
     /**
      * Creates a code area, adds it to a VirtualizedScrollPane, and then adds the scroll pane to the tab object.
