@@ -499,7 +499,7 @@ public class ToolbarController {
             pbArgs.add("a");
             pbArgs.add(file.getAbsolutePath());
             ProcessBuilder pb = new ProcessBuilder(pbArgs);
-            console.setProcessStatus(true);
+            console.setProcessActive(true);
             this.curProcess = pb.start();
 
             this.outputToConsole();
@@ -509,7 +509,7 @@ public class ToolbarController {
         } catch (Throwable e) {
             Platform.runLater(() -> {
                 createErrorDialog("File Compilation", "Error compiling.\nPlease try again with another valid Java File.");
-                console.setProcessStatus(false);
+                console.setProcessActive(false);
             });
             return false;
         }
@@ -531,7 +531,7 @@ public class ToolbarController {
             pbArgs.add("C:\\Users\\Tear\\Downloads\\CS361-proj13\\Proj13\\src\\proj15DouglasMacDonaldZhang\\include\\Mars4_5.jar");
             pbArgs.add(file.getAbsolutePath());
             ProcessBuilder pb = new ProcessBuilder(pbArgs);
-            console.setProcessStatus(true);
+            console.setProcessActive(true);
             this.curProcess = pb.start();
 
             // Start output and input in different threads to avoid deadlock
@@ -547,7 +547,7 @@ public class ToolbarController {
                             if (consoleLength == console.getLength()) {
                                 console.appendText("\nProgram exited unexpectedly\n");
                                 console.requestFollowCaret();
-                                console.setProcessStatus(false);
+                                console.setProcessActive(false);
                             }
                         });
                     }
@@ -565,7 +565,7 @@ public class ToolbarController {
                             if (consoleLength == console.getLength()) {
                                 console.appendText("\nProgram exited unexpectedly\n");
                                 console.requestFollowCaret();
-                                console.setProcessStatus(false);
+                                console.setProcessActive(false);
                             }
                         });
                     }
@@ -578,7 +578,7 @@ public class ToolbarController {
         } catch (Throwable e) {
             Platform.runLater(() -> {
                 createErrorDialog("File Running", "Error running " + file.getName() + ".");
-                console.setProcessStatus(false);
+                console.setProcessActive(false);
             });
             return false;
         }
@@ -601,7 +601,7 @@ public class ToolbarController {
     /**
      * Helper method for getting program input
      */
-    public void inputFromConsole() throws java.io.IOException, java.lang.InterruptedException {
+    public void inputFromConsole() throws IOException, InterruptedException {
         OutputStream stdin = curProcess.getOutputStream();
         BufferedWriter inputWriter = new BufferedWriter(new OutputStreamWriter(stdin));
 
@@ -613,9 +613,9 @@ public class ToolbarController {
             // signal output thread
             this.mutex.release();
             // wait for output to acquire mutex
-            Thread.sleep(1);
+            Thread.sleep(500); //Increasing the Thread sleep time seems to have fixed the double input writing
         }
-        console.setProcessStatus(false);
+        console.setProcessActive(false);
         inputWriter.close();
     }
 

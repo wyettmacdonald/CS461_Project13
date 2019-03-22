@@ -34,7 +34,7 @@ public class Console extends StyleClassedTextArea {
     private ToolbarController toolbarController;
     //The index of the first character of the command in the console text string
     private int commandStartIndex;
-    private boolean processStatus; //Whether there's a process running, ie, compilation - Tia added for Proj 15
+    private boolean processActive; //Tracks whether there's a process running, ie, compilation
 
     /**
      *  This is the constructor, setting up the console
@@ -99,7 +99,7 @@ public class Console extends StyleClassedTextArea {
      */
     private void handleKeyPressed(KeyEvent e) {
         //If there are no process running consume the event and return
-        if(!this.getProcessStatus()){
+        if(!this.getProcessActive()){
             e.consume();
             return;
         }
@@ -123,7 +123,7 @@ public class Console extends StyleClassedTextArea {
             //If Enter was pressed in the middle of a command append a new line to the end
             if (this.getCaretPosition() >= commandStartIndex) {
                 //If there is a process running, set the receivedCommand field to true
-                if (this.getProcessStatus()){
+                if (this.getProcessActive()){
                     this.receivedCommand = true;
                 }
                 //this.appendText("\n"); //Don't know why there are two new lines, leaving this comment in case there's a good reason
@@ -131,7 +131,7 @@ public class Console extends StyleClassedTextArea {
             }
 
             //If there is a process running, set the receivedCommand field to true
-            if (this.getProcessStatus()){
+            if (this.getProcessActive()){
                 this.receivedCommand = true;
             }
             this.appendText("\n");
@@ -176,8 +176,8 @@ public class Console extends StyleClassedTextArea {
      * get the process status for the toolbarController
      * @return the boolean value indicating if a process running
      */
-    private boolean getProcessStatus(){
-        return processStatus;
+    private boolean getProcessActive(){
+        return processActive;
     }
 
 
@@ -185,8 +185,8 @@ public class Console extends StyleClassedTextArea {
      * get the process status for the toolbarController
      * @return the boolean value indicating if a process running
      */
-    public void setProcessStatus(boolean newStatus){
-         processStatus = newStatus;
+    public void setProcessActive(boolean newStatus){
+         processActive = newStatus;
     }
 
 
