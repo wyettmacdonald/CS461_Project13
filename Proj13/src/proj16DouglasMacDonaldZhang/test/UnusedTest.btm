@@ -1,0 +1,86 @@
+/*
+* Tia Zhang and Wyett MacDonald
+* CS461 Project 13 Test File
+* Test file for finding unused (and a bit for finding uses)
+*/
+
+class Main extends Parent{
+	String meh;
+
+	void blah(){
+		var goo = "Mah";
+		var arg = 0;
+		arg = 10;
+		var apples = 10;
+		var airplanes = "I could really use a wish right now";
+		meh = "string";
+		meh = "nice one";
+		var meh2 = meh;
+		var i = 0;
+		for(i; i < 10; i++) {
+			i = 5;
+			meh = "something";
+			var citron = "Mah";
+			//citron = "I was used!";
+			airplanes = "could we pretend that airplanes";
+		}
+		while(i < 10) {
+			i++;
+			meh = "something else";
+			var citron = "Doodoo";
+			citron = "Baby Shark";
+		}
+
+		
+		super.god(); //This works!
+		super.parentStr = "Me"; //This works too!
+
+		var test = new Test();
+		test.testMethod();
+		
+	
+
+	}
+	
+
+	void g(){
+		blah();
+		var mommyShark = "Doodoo";
+		mommyShark = "Doodoo doodoo";
+		var i = 0;
+		while(i < 10) {
+			i++;
+			var babyShark = "Doodoo";
+			babyShark = "Doodoo doodoo";
+			var daddyShark = "Doodoo";
+		}
+	}
+	void ananas (){ //It's French for pineapple and it was the first a-word I thought of
+		
+	}
+
+
+	
+	
+}
+
+
+class Parent{
+	String parentStr = "Who's your daddy?";
+
+	void god(){
+	return;
+	}
+	void main(){
+	return;
+	}
+}
+
+
+class Test{
+	String testStr = "I'm testing to see if this increments";
+	
+	void testMethod(){
+		return;
+	}
+}
