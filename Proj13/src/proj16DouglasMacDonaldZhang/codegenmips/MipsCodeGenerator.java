@@ -118,7 +118,6 @@ public class MipsCodeGenerator
         this.root = root;
 
         // set up the PrintStream for writing the assembly file.
-        //  TODO ask Dale why only this code is in the try/catch and the rest of the code should be below it
         try {
             this.out = new PrintStream(new FileOutputStream(outFile));
             this.assemblySupport = new MipsSupport(out);
@@ -137,23 +136,23 @@ public class MipsCodeGenerator
         this.assemblySupport.genComment("Project 16");
         this.assemblySupport.genComment("April 4, 2019");
         this.assemblySupport.genComment("MIPS auto-generated code");
-
+        this.out.println("\n\n\n");
         this.assemblySupport.genDataStart();
 
 
         StringConstantsVisitor stringVisitor = new StringConstantsVisitor();
         Map<String, String> stringMap = stringVisitor.getStringConstants(ast);
-        //Add in class names to the String constants
 
 
         //Go down the tree and add all the classes to the class list
         //Assuming the root is Object
+        //Using a Vector just to be cautious since we have multithreading going on
         List<ClassTreeNode> classList = new Vector<ClassTreeNode>();
         ClassCollector classCollector = new ClassCollector();
         classCollector.getAllClasses(classList, root);
 
 
-        //Count all the fields for each classes
+        //Add class names to the string map and count all the fields for each class
         FieldCounterVisitor fieldCounter = new FieldCounterVisitor();
         Map<String, Integer> fieldMap = new HashMap<String, Integer>();
         for(int i = 0; i < classList.size(); i ++){
@@ -164,8 +163,7 @@ public class MipsCodeGenerator
         }
 
 
-        //TODO figure out a better way to get the name of the file
-        //TODO ask if the name label0 matters
+        //Add the filename string to the String map
         Class_ classNode = (Class_) ast.getClassList().get(0);
         stringMap.put(classNode.getFilename(), "filename");
 
@@ -176,6 +174,7 @@ public class MipsCodeGenerator
 
         System.out.println("Classlist " + classList.size());
 
+
         //Generate class table
         assemblySupport.genLabel("class_name_table");
         for(int i = 0; i < classList.size(); i ++){
@@ -184,16 +183,18 @@ public class MipsCodeGenerator
 
         out.println();
 
-        //In a separate for loop to make Dale happy about the formatting
+        //Generate the globl declaration for the class templates
+        // In a separate for loop to make Dale happy about the formatting
         for(int i = 0; i < classList.size(); i ++){
             assemblySupport.genGlobal(classList.get(i).getName() + "_template");
         }
 
-        //Generate the class templates
+        //Generate the class templates and their dispatch tables
         for(int i = 0; i < classList.size(); i ++){
-            ClassTreeNode classTreeNode = classList.get(i); //Got a null pointer here once for some reason
+            ClassTreeNode classTreeNode = classList.get(i); //Got a null pointer here once, but has not reappeared
             //System.out.println(classTreeNode + " Name " + classTreeNode.getName() + " Map " + fieldMap);
-            //Retrieving fields count here so that generateClassTemplate can be used independently
+
+            //Retrieving fields count here so that generateClassTemplate is independent
             // from fieldMap and FieldCounterVisitor
             int numFields = fieldMap.get(classTreeNode.getName());
             generateClassTemplate(classTreeNode, i, numFields);
@@ -204,6 +205,7 @@ public class MipsCodeGenerator
 
         out.println();
 
+        //Generate the globl declarations for the dispatch tables
         for(int i = 0; i < classList.size(); i ++){
             assemblySupport.genGlobal(classList.get(i).getName()+"_dispatch_table");
         }
@@ -211,9 +213,14 @@ public class MipsCodeGenerator
 
         out.flush();
         out.close();
-        // add code here...
+
     }
 
+    /**
+    * Generates a constant String object for the data section of a MIPS file and writes it to the output stream
+    * @param string is the string inside the String object
+    * @param label is the String label that should mark the object.
+    */
     private void generateStringObj(String string, String label){
         assemblySupport.genLabel(label);
         assemblySupport.genWord("1"); //String is type 1
@@ -224,15 +231,21 @@ public class MipsCodeGenerator
         assemblySupport.genWord("String_dispatch_table");
         assemblySupport.genWord(Integer.toString(string.length()));
         assemblySupport.genAscii(string);
-        assemblySupport.genByte("0");
-        assemblySupport.genAlign();
+        //assemblySupport.genByte("0");
+        //assemblySupport.genAlign();
     }
 
 
+    /*
+     * Generates a class template for the data section of a MIPS file and writes it to the output stream
+     * @param classTreeNode is the ClassTreeNode corresponding to the class
+     * @param typeNum is an int representing the type of the class.
+     * @param numFields is the number of fields in the object
+     */
     private void generateClassTemplate(ClassTreeNode classTreeNode, int typeNum, int numFields){
         assemblySupport.genLabel(classTreeNode.getName()+ "_class_template");
         assemblySupport.genWord(Integer.toString(typeNum));
-        //First 3 words are constant and each 4 bytes.
+        //First 3 words are constant and each 4 bytes. Each field is 4 bytes
         int size = 12 +  (4 * numFields);
         size = (int) Math.ceil(size/4.0) * 4; //Round up to the nearest 4
         assemblySupport.genWord(Integer.toString(size));
@@ -243,6 +256,10 @@ public class MipsCodeGenerator
     }
 
 
+    /*
+     * Generates class's dispatch template for the data section of a MIPS file and writes it to the output stream
+     * @param classTreeNode is the ClassTreeNode corresponding to the class to have its dispatch table generated
+     */
     private void generateDispatchTable(ClassTreeNode classTreeNode){
         assemblySupport.genLabel(classTreeNode.getName()+ "_dispatch_table");
         MethodCollectorVisitor methodCollectorVisitor = new MethodCollectorVisitor();
@@ -250,6 +267,11 @@ public class MipsCodeGenerator
         methodsList.forEach((method, className) -> {
             assemblySupport.genWord(className + "." + method);
         });
+
+        //This method can't be generalized that much - it can't be generalized to a HashMap because HashMaps don't
+        //have a set order, which is absolutely mandatory for this method to work. I think it's safest just to tie
+        //the method to my MethodCollectorVisitor rather than mandate that a param be a LinkedHashMap
+        //that already has handled inheritance in insertion order.
 
     }
 
