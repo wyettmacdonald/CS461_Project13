@@ -14,8 +14,13 @@ import proj16DouglasMacDonaldZhang.bantam.visitor.Visitor;
 import java.util.HashMap;
 import java.util.Map;
 
+/*
+* Class which counts the number of fields in a class
+* Adapted from the NumLocalVarsVisitor originally written by Zeb Keith-Hardy
+*/
+
 public class FieldCounterVisitor extends Visitor {
-    private int numFields = 0; //Number of fields in current method
+    private int numFields = 0; //Number of fields in current class
 
 
     /**
