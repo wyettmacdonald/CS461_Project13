@@ -9,10 +9,12 @@
 package proj16DouglasMacDonaldZhang.codegenmips;
 
 import proj16DouglasMacDonaldZhang.bantam.ast.*;
+import proj16DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
 import proj16DouglasMacDonaldZhang.bantam.visitor.Visitor;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 
 /*
 * Class which counts the number of fields in a class
@@ -25,11 +27,30 @@ public class FieldCounterVisitor extends Visitor {
 
     /**
      * searches a Class_ node for the number of local fields in a class
-     * @param node Class_ node to be searched
+     * @param classTreeNode ClassTreeNode whose Class_ node is to be searched
      */
-    public int getNumFields(Class_ node){
+    public int getNumFields(ClassTreeNode classTreeNode){
         numFields = 0;
-        node.accept(this);
+        if(classTreeNode.getName().equals("Object")) {
+            return numFields; //Object has no fields;
+        }
+        else{
+            ClassTreeNode curNode;
+            Stack<ClassTreeNode> inheritanceStack = new Stack<ClassTreeNode>();
+            inheritanceStack.push(classTreeNode);
+            //Store the inheritance path of the class.
+            while (!(curNode = classTreeNode.getParent()).getName().equals("Object")) {
+                inheritanceStack.push(curNode);
+                classTreeNode = curNode;
+            }
+
+            //Go down the inheritance path and count the fields in each ancestor class and itself
+            while (inheritanceStack.size() > 0) {
+                curNode = inheritanceStack.pop();
+                Class_ classNode = curNode.getASTNode();
+                classNode.accept(this);
+            }
+        }
         return numFields;
     }
 

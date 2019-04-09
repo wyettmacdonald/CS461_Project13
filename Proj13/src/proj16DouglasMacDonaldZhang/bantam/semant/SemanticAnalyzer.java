@@ -248,7 +248,7 @@ public class SemanticAnalyzer
             if(astNode.getParent() == null){
                 System.out.println(astNode.getName());
                 parentNode = classMap.get("Object");
-                treeNode.setParent(parentNode); //TODO find out where the class parent is set
+                treeNode.setParent(parentNode);
             }
 
             else {
