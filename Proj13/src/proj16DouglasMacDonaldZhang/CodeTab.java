@@ -49,7 +49,8 @@ public class CodeTab extends Tab{
                 }
             });
         }
-        else{
+
+        else {
             JavaStyle style = new JavaStyle();
             this.addCodeArea(content, style);
             this.setOnSelectionChanged( event -> {

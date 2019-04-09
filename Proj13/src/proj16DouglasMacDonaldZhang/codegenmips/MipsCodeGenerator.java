@@ -1,4 +1,3 @@
-
 /* Bantam Java Compiler and Language Toolset.
 
    Copyright (C) 2009 by Marc Corliss (corliss@hws.edu) and
@@ -29,6 +28,8 @@ package proj16DouglasMacDonaldZhang.codegenmips;
 import proj16DouglasMacDonaldZhang.bantam.ast.ClassList;
 import proj16DouglasMacDonaldZhang.bantam.ast.Program;
 import proj16DouglasMacDonaldZhang.bantam.ast.Class_;
+import proj16DouglasMacDonaldZhang.bantam.parser.Parser;
+import proj16DouglasMacDonaldZhang.bantam.semant.SemanticAnalyzer;
 import proj16DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
 import proj16DouglasMacDonaldZhang.bantam.util.CompilationException;
 import proj16DouglasMacDonaldZhang.bantam.util.Error;
@@ -142,6 +143,7 @@ public class MipsCodeGenerator
 
         StringConstantsVisitor stringVisitor = new StringConstantsVisitor();
         Map<String, String> stringMap = stringVisitor.getStringConstants(ast);
+        //Add in class names to the String constants
 
 
         //Go down the tree and add all the classes to the class list
@@ -152,7 +154,7 @@ public class MipsCodeGenerator
         classCollector.getAllClasses(classList, root);
 
 
-        //Add class names to the string map and count all the fields for each class
+        //Count all the fields for each classes
         FieldCounterVisitor fieldCounter = new FieldCounterVisitor();
         Map<String, Integer> fieldMap = new HashMap<String, Integer>();
         for(int i = 0; i < classList.size(); i ++){
@@ -174,8 +176,7 @@ public class MipsCodeGenerator
            out.println();
         });
 
-        System.out.println("Classlist " + classList.size());
-
+//        System.out.println("Classlist " + classList.size());
 
         //Generate class table
         assemblySupport.genLabel("class_name_table");
@@ -185,18 +186,18 @@ public class MipsCodeGenerator
 
         out.println();
 
-        //Generate the globl declaration for the class templates
-        // In a separate for loop to make Dale happy about the formatting
+        //In a separate for loop to make Dale happy about the formatting
         for(int i = 0; i < classList.size(); i ++){
             assemblySupport.genGlobal(classList.get(i).getName() + "_template");
         }
 
-        //Generate the class templates and their dispatch tables
-        for(int i = 0; i < classList.size(); i ++){
-            ClassTreeNode classTreeNode = classList.get(i); //Got a null pointer here once, but has not reappeared
-            //System.out.println(classTreeNode + " Name " + classTreeNode.getName() + " Map " + fieldMap);
+        out.println();
 
-            //Retrieving fields count here so that generateClassTemplate is independent
+        //Generate the class templates
+        for(int i = 0; i < classList.size(); i ++){
+            ClassTreeNode classTreeNode = classList.get(i); //Got a null pointer here once for some reason
+            //System.out.println(classTreeNode + " Name " + classTreeNode.getName() + " Map " + fieldMap);
+            //Retrieving fields count here so that generateClassTemplate can be used independently
             // from fieldMap and FieldCounterVisitor
             int numFields = fieldMap.get(classTreeNode.getName());
             generateClassTemplate(classTreeNode, i, numFields);
@@ -212,6 +213,23 @@ public class MipsCodeGenerator
             assemblySupport.genGlobal(classList.get(i).getName()+"_dispatch_table");
         }
         out.println();
+
+        this.assemblySupport.genTextStart();
+        out.println();
+
+        GenInnerCode genInnerCode = new GenInnerCode(assemblySupport, out);
+
+        for(int i = 0; i < classList.size(); i ++) {
+            out.println(classList.get(i).getName()+"_init:");
+        }
+
+        for(int i = 0; i < classList.size(); i ++) {
+            if(!classList.get(i).isBuiltIn()) {
+                genInnerCode.startVisit(classList.get(i));
+            }
+        }
+
+        out.println("\tjr $ra");
 
         out.flush();
         out.close();
@@ -281,6 +299,29 @@ public class MipsCodeGenerator
 
 
     public static void main(String[] args) {
+        args = new String[]{"/Users/wyettmacdonald/Documents/Spring_19/CS461/CS461_Project13/Proj13/src/proj16DouglasMacDonaldZhang/test/UnusedTest.btm"};
+        ErrorHandler errorHandler = new ErrorHandler();
+        Parser parser = new Parser(errorHandler);
+        SemanticAnalyzer analyzer = new SemanticAnalyzer(errorHandler);
+        MipsCodeGenerator mipsCodeGenerator = new MipsCodeGenerator(errorHandler, false, false);
+        for (String inFile : args) {
+            System.out.println("\n========== MIPS Results for " + inFile + " =============");
+            try {
+                errorHandler.clear();
+                Program program = parser.parse(inFile);
+                analyzer.analyze(program);
+                ClassTreeNode objectNode = analyzer.getClassMap().get("Object");
+                String inFileName = inFile.substring(0, inFile.length()-4);
+                mipsCodeGenerator.generate(objectNode, program, inFileName + ".asm");
+                System.out.println("  MIPS Generation was successful.");
+            } catch (CompilationException ex) {
+                System.out.println("  There were errors:");
+                List<Error> errors = errorHandler.getErrorList();
+                for (Error error : errors) {
+                    System.out.println("\t" + error.toString());
+                }
+            }
+        }
         // ... add testing code here ...
     }
 }
