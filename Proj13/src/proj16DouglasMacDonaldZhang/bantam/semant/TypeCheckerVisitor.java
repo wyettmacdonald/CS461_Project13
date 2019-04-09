@@ -162,10 +162,12 @@ public class TypeCheckerVisitor extends Visitor
                 registerError(node, "Methods with non-void return type "
                         + "must end with a return statement.");
             }
-            ASTNode stmt = sList.get(sList.getSize()-1);
-            if( ! (stmt instanceof ReturnStmt) ) {
-                registerError(node, "Methods with non-void return type "
-                        + "must end with a return statement.");
+            else {
+                ASTNode stmt = sList.get(sList.getSize() - 1);
+                if (!(stmt instanceof ReturnStmt)) {
+                    registerError(node, "Methods with non-void return type "
+                            + "must end with a return statement.");
+                }
             }
         }
         currentMethod = null;

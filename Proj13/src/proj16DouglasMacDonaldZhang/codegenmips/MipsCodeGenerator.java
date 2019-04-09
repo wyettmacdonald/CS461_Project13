@@ -160,14 +160,16 @@ public class MipsCodeGenerator
         for(int i = 0; i < classList.size(); i ++){
             ClassTreeNode classTreeNode = classList.get(i);
             stringMap.put(classList.get(i).getName(), "ClassName_" + i);
-            int numFields = fieldCounter.getNumFields(classTreeNode.getASTNode());
+            int numFields = fieldCounter.getNumFields(classTreeNode);
             fieldMap.put(classTreeNode.getName(), numFields);
         }
 
 
         //Add the filename string to the String map
         Class_ classNode = (Class_) ast.getClassList().get(0);
-        stringMap.put(classNode.getFilename(), "filename");
+        String filePath = classNode.getFilename();
+        String[] fileParts = filePath.split("\\\\"); //To fix on Windows - \\ to escape in Java and then \\ for regex
+        stringMap.put(fileParts[fileParts.length-1], "filename");
 
         stringMap.forEach( (string, label) -> {
            generateStringObj(string, label);
