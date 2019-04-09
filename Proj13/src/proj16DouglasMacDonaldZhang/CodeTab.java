@@ -49,7 +49,7 @@ public class CodeTab extends Tab{
                 }
             });
         }
-        else if(filename.endsWith(".btm")){
+        else {
             JavaStyle style = new JavaStyle();
             this.addCodeArea(content, style);
             this.setOnSelectionChanged( event -> {
