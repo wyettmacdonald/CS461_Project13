@@ -29,6 +29,7 @@ package proj16DouglasMacDonaldZhang;
 import javafx.application.Platform;
 import javafx.geometry.Side;
 import javafx.scene.control.Alert;
+import javafx.stage.FileChooser;
 import org.fxmisc.richtext.CodeArea;
 import proj16DouglasMacDonaldZhang.bantam.ast.Program;
 import proj16DouglasMacDonaldZhang.bantam.parser.Parser;
@@ -462,11 +463,63 @@ public class ToolbarController {
         }
     }
 
+    /**
+     * A private inner class used to scan a file in a separate thread
+     * Print error messages to the console and write tokens in a new tab
+     */
+    private class MIPSTask implements Callable {
+        /**
+         * Start the process by creating a scanner and use it to scan the file
+         * @return a result string containing information about all the tokens
+         */
+        @Override
+        public String call(){
+            ErrorHandler errorHandler = new ErrorHandler();
+            Scanner scanner = new Scanner(ToolbarController.this.codeTabPane.getFileName(), errorHandler);
+            Token token = scanner.scan();
+            StringBuilder tokenString = new StringBuilder();
+
+            while(token.kind != Token.Kind.EOF){
+                tokenString.append(token.toString() + "\n");
+                token = scanner.scan();
+            }
+            String resultString = tokenString.toString();
+            Platform.runLater(()-> {
+                ToolbarController.this.console.writeToConsole("There were: " +
+                        errorHandler.getErrorList().size() + " errors in " +
+                        ToolbarController.this.codeTabPane.getFileName() + "\n","Output");
+                if(errorHandler.errorsFound()){
+                    List<Error> errorList= errorHandler.getErrorList();
+                    Iterator<Error> errorIterator = errorList.iterator();
+                    ToolbarController.this.console.writeToConsole("\n","Error");
+
+                    while(errorIterator.hasNext()){
+                        ToolbarController.this.console.writeToConsole(
+                                errorIterator.next().toString() + "\n","Error");
+                    }
+                }
+                ToolbarController.this.codeTabPane.createTabWithContent(resultString);
+                ToolbarController.this.scanIsDone = true;
+            });
+            return tokenString.toString();
+        }
+    }
+
 
 
     private void compileToMips(ClassTreeNode objectNode, Program ast, ErrorHandler errorHandler, String outFile){
         MipsCodeGenerator mipsGenerator = new MipsCodeGenerator(errorHandler, false, false);
         mipsGenerator.generate(objectNode, ast, outFile + ".asm");
+//        for (File file: this.codeTabPane.getCurrentFile().listFiles()) {
+//
+//            System.out.println(file.getName());
+//        }
+//        File newFile = new File(outFile + ".asm");
+//        this.codeTabPane.makeTabFromFile(newFile, true);
+        Platform.runLater(()-> {
+            File newFile = new File(outFile + ".asm");
+            this.codeTabPane.makeTabFromFile(newFile, true);
+        });
     }
 
 
