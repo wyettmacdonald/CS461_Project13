@@ -10,15 +10,15 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/Proj13/src/proj16DouglasMacDonaldZhang/include/antlr-4.7.1-complete.jar!/" />
-          <root url="jar://$MODULE_DIR$/Proj13/src/proj16DouglasMacDonaldZhang/include/richtextfx-fat-0.9.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/Proj13/src/proj16DouglasMacDonaldZhang/include/Mars4_5.jar!/" />
+          <root url="jar://$MODULE_DIR$/Proj13/src/proj17DouglasMacDonaldZhang/include/antlr-4.7.1-complete.jar!/" />
+          <root url="jar://$MODULE_DIR$/Proj13/src/proj17DouglasMacDonaldZhang/include/richtextfx-fat-0.9.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/Proj13/src/proj17DouglasMacDonaldZhang/include/Mars4_5.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MODULE_DIR$/Proj13/src/proj16DouglasMacDonaldZhang/include/Mars4_5.jar!/docs" />
+          <root url="jar://$MODULE_DIR$/Proj13/src/proj17DouglasMacDonaldZhang/include/Mars4_5.jar!/docs" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/Proj13/src/proj16DouglasMacDonaldZhang/include/Mars4_5.jar!/" />
+          <root url="jar://$MODULE_DIR$/Proj13/src/proj17DouglasMacDonaldZhang/include/Mars4_5.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
