@@ -62,7 +62,8 @@ class Main extends Parent{
 
 	void main(){
 	return;
-	}	
+	}
+	
 }
 
 

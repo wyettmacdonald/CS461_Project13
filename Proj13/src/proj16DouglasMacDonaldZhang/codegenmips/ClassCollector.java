@@ -12,7 +12,7 @@ import proj16DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
 import java.util.List;
 import java.util.Vector;
 
-/*
+/**
 * Class that collects all of the ClassTreeNodes of an inheritance tree in a List
 */
 

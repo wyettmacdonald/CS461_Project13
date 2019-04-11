@@ -16,7 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Stack;
 
 
-/*
+/**
 * Class which collects all the methods of a class in the correct inheritance order
 * from top of the tree going down, with overriden methods taking the ancestor's spot in the order
 */
@@ -26,7 +26,7 @@ public class MethodCollectorVisitor extends Visitor {
     private String currentClass; //stores the current class in the traversal of the inheritance hierarchy
 
 
-    /*
+    /**
     * Collects all the methods of a class in a map
     * @param classTreeNode is the ClassTreeNode of the class whose methods should be mapped
     * @return a LinkedHashMap<String, String> which is the map
@@ -65,9 +65,9 @@ public class MethodCollectorVisitor extends Visitor {
         return methodsMap;
     }
 
-    /*
+    /**
     * Visits a Method node and adds it to the methods map
-    * @param is the Method node to be visited
+    * @param the Method node to be visited
     * @return null
     */
     public Object visit(Method node){

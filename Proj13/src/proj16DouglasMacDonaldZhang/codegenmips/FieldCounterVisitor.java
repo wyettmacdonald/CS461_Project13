@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
-/*
+/**
 * Class which counts the number of fields in a class
 * Adapted from the NumLocalVarsVisitor originally written by Zeb Keith-Hardy
 */

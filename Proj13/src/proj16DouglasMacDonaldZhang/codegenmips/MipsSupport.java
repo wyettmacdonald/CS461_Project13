@@ -306,11 +306,11 @@ public class MipsSupport {
     /**
      * Generate the code to start the text section
      */
-    public void genTextStart() {
+    public void genTextStart(String mainMethod) {
         out.println("\t.text");
         genGlobal("main");
         genGlobal("Main_init");
-        genGlobal("Main.main");
+        genGlobal(mainMethod);
         // main (below) defined only because SPIM requires it -- not used
         genLabel("main");
         // if this gets called for some reason then just call __start

@@ -86,6 +86,16 @@ public class MipsCodeGenerator
     private ErrorHandler errorHandler;
 
     /**
+     * for keeping track of the class.methods
+     */
+    private HashSet<String> classMethodList;
+
+    /**
+     * to keep track of where the main method is
+     */
+    private String theMainMethod;
+
+    /**
      * MipsCodeGenerator constructor
      *
      * @param errorHandler ErrorHandler to record all errors that occur
@@ -118,6 +128,7 @@ public class MipsCodeGenerator
      */
     public void generate(ClassTreeNode root, Program ast, String outFile) {
         this.root = root;
+        classMethodList = new HashSet<>();
 
         // set up the PrintStream for writing the assembly file.
         try {
@@ -174,11 +185,13 @@ public class MipsCodeGenerator
         String[] fileParts = filePath.split("\\\\"); //To fix on Windows - \\ to escape in Java and then \\ for regex
         stringMap.put(fileParts[fileParts.length-1], "filename");
 
+        assemblySupport.genComment("String Objects");
         stringMap.forEach( (string, label) -> {
-           generateStringObj(string, label);
-           out.println();
+            generateStringObj(string, label);
+            out.println();
         });
 
+        assemblySupport.genComment("This is the class name table");
         //Generate class table
         assemblySupport.genLabel("class_name_table");
         for(int i = 0; i < classList.size(); i ++){
@@ -201,8 +214,10 @@ public class MipsCodeGenerator
             //Retrieving fields count here so that generateClassTemplate can be used independently
             // from fieldMap and FieldCounterVisitor
             int numFields = fieldMap.get(classTreeNode.getName());
+            assemblySupport.genComment("Template for " + classList.get(i).getName());
             generateClassTemplate(classTreeNode, i, numFields);
             out.println();
+            assemblySupport.genComment("Dispatch table for " + classList.get(i).getName());
             generateDispatchTable(classTreeNode);
             out.println();
         }
@@ -215,34 +230,18 @@ public class MipsCodeGenerator
 
         out.println();
 
-        this.assemblySupport.genTextStart();
+        this.assemblySupport.genTextStart(theMainMethod);
         out.println();
-
-        GenInnerCode genInnerCode = new GenInnerCode(assemblySupport, out);
 
         for(int i = 0; i < classList.size(); i ++) {
             out.println(classList.get(i).getName()+"_init:");
         }
 
         // Get user defined methods in the from <class_name>.<method_name>
-        ArrayList<String> classMethods = new ArrayList<>();
-        for(int i = 0; i < classList.size(); i ++) {
-            if(!classList.get(i).isBuiltIn()) {
-                boolean classBuiltIn = false;
-                MethodCollectorVisitor methodCollectorVisitor = new MethodCollectorVisitor();
-                LinkedHashMap<String, String> methodsList = methodCollectorVisitor.getMethods(classList.get(i));
-                methodsList.forEach((method, className) -> {
-                    if (!isClassBuiltIn(classList, className)) {
-                        if (!classMethods.contains(className + "." + method + ":")) {
-                            classMethods.add(className + "." + method + ":");
-                        }
-                    }
-                });
-            }
-        }
-        // output the class methods
-        for(int i = 0; i < classMethods.size(); i++) {
-            out.println(classMethods.get(i));
+
+        Iterator it = classMethodList.iterator();
+        while (it.hasNext()) {
+            out.println(it.next());
         }
 
         out.println("\tjr $ra");
@@ -250,22 +249,6 @@ public class MipsCodeGenerator
         out.flush();
         out.close();
 
-    }
-
-    /**
-     * Checks if a class is built in or not from a string filename
-     * @param classList classList of classTreeNodes
-     * @param name the class name
-     * @return true if param class is built in, otherwise false
-     */
-    private boolean isClassBuiltIn(List<ClassTreeNode> classList, String name) {
-
-        for(int j = 0; j < classList.size(); j++) {
-            if(classList.get(j).getName().equals(name) && classList.get(j).isBuiltIn()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -288,7 +271,7 @@ public class MipsCodeGenerator
     }
 
 
-    /*
+    /**
      * Generates a class template for the data section of a MIPS file and writes it to the output stream
      * @param classTreeNode is the ClassTreeNode corresponding to the class
      * @param typeNum is an int representing the type of the class.
@@ -298,7 +281,6 @@ public class MipsCodeGenerator
         assemblySupport.genLabel(classTreeNode.getName()+ "_template");
         assemblySupport.genWord(Integer.toString(typeNum));
         //First 3 words are constant and each 4 bytes. Each field is 4 bytes
-//        System.out.println("Class: " + classTreeNode.getName() + " and numFields: " + numFields);
         int size = 12 +  (4 * numFields);
         size = (int) Math.ceil(size/4.0) * 4; //Round up to the nearest 4
         assemblySupport.genWord(Integer.toString(size));
@@ -317,9 +299,15 @@ public class MipsCodeGenerator
         assemblySupport.genLabel(classTreeNode.getName()+ "_dispatch_table");
         MethodCollectorVisitor methodCollectorVisitor = new MethodCollectorVisitor();
         LinkedHashMap<String, String> methodsList = methodCollectorVisitor.getMethods(classTreeNode);
-//        System.out.println("Class: " + classTreeNode.getName() + " and numMethods: " + methodsList.size());
         methodsList.forEach((method, className) -> {
-            System.out.println(method);
+            if(!classTreeNode.getClassMap().get(className).isBuiltIn() &&
+                    !classMethodList.contains(className + "." + method + ":")) {
+                classMethodList.add(className + "." + method + ":");
+                String mainString = className + "." + method;
+                if(mainString.substring(mainString.length()-5).equals(".main")) {
+                    theMainMethod = className + "." + method;
+                }
+            }
             assemblySupport.genWord(className + "." + method);
         });
 
@@ -330,6 +318,11 @@ public class MipsCodeGenerator
 
     }
 
+    /**
+     * Main method
+     *
+     * @param args
+     */
     public static void main(String[] args) {
         args = new String[]{"/Users/wyettmacdonald/Documents/Spring_19/CS461/CS461_Project13/Proj13/src/proj16DouglasMacDonaldZhang/test/UnusedTest.btm"};
         ErrorHandler errorHandler = new ErrorHandler();
