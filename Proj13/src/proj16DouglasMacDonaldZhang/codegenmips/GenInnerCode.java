@@ -66,8 +66,6 @@ public class GenInnerCode extends Visitor {
      */
     public Object visit(Method node) {
         mipsSupport.genLabel(curClass + "." + node.getName());
-        node.getFormalList().accept(this);
-        node.getStmtList().accept(this);
         return null;
     }
 

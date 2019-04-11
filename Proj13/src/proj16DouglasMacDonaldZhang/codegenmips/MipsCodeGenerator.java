@@ -39,6 +39,7 @@ import proj16DouglasMacDonaldZhang.bantam.semant.StringConstantsVisitor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -139,6 +140,8 @@ public class MipsCodeGenerator
         this.assemblySupport.genComment("MIPS auto-generated code");
         this.out.println("\n\n\n");
         this.assemblySupport.genDataStart();
+        this.assemblySupport.genLabel("gc_flag");
+        this.assemblySupport.genWord("0");
 
 
         StringConstantsVisitor stringVisitor = new StringConstantsVisitor();
@@ -176,8 +179,6 @@ public class MipsCodeGenerator
            out.println();
         });
 
-//        System.out.println("Classlist " + classList.size());
-
         //Generate class table
         assemblySupport.genLabel("class_name_table");
         for(int i = 0; i < classList.size(); i ++){
@@ -207,11 +208,11 @@ public class MipsCodeGenerator
         }
 
         out.println();
-
         //Generate the globl declarations for the dispatch tables
-        for(int i = 0; i < classList.size(); i ++){
-            assemblySupport.genGlobal(classList.get(i).getName()+"_dispatch_table");
+        for(int j = 0; j < classList.size(); j++){
+            assemblySupport.genGlobal(classList.get(j).getName()+"_dispatch_table");
         }
+
         out.println();
 
         this.assemblySupport.genTextStart();
@@ -223,10 +224,25 @@ public class MipsCodeGenerator
             out.println(classList.get(i).getName()+"_init:");
         }
 
+        // Get user defined methods in the from <class_name>.<method_name>
+        ArrayList<String> classMethods = new ArrayList<>();
         for(int i = 0; i < classList.size(); i ++) {
             if(!classList.get(i).isBuiltIn()) {
-                genInnerCode.startVisit(classList.get(i));
+                boolean classBuiltIn = false;
+                MethodCollectorVisitor methodCollectorVisitor = new MethodCollectorVisitor();
+                LinkedHashMap<String, String> methodsList = methodCollectorVisitor.getMethods(classList.get(i));
+                methodsList.forEach((method, className) -> {
+                    if (!isClassBuiltIn(classList, className)) {
+                        if (!classMethods.contains(className + "." + method + ":")) {
+                            classMethods.add(className + "." + method + ":");
+                        }
+                    }
+                });
             }
+        }
+        // output the class methods
+        for(int i = 0; i < classMethods.size(); i++) {
+            out.println(classMethods.get(i));
         }
 
         out.println("\tjr $ra");
@@ -234,6 +250,22 @@ public class MipsCodeGenerator
         out.flush();
         out.close();
 
+    }
+
+    /**
+     * Checks if a class is built in or not from a string filename
+     * @param classList classList of classTreeNodes
+     * @param name the class name
+     * @return true if param class is built in, otherwise false
+     */
+    private boolean isClassBuiltIn(List<ClassTreeNode> classList, String name) {
+
+        for(int j = 0; j < classList.size(); j++) {
+            if(classList.get(j).getName().equals(name) && classList.get(j).isBuiltIn()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -263,9 +295,10 @@ public class MipsCodeGenerator
      * @param numFields is the number of fields in the object
      */
     private void generateClassTemplate(ClassTreeNode classTreeNode, int typeNum, int numFields){
-        assemblySupport.genLabel(classTreeNode.getName()+ "_class_template");
+        assemblySupport.genLabel(classTreeNode.getName()+ "_template");
         assemblySupport.genWord(Integer.toString(typeNum));
         //First 3 words are constant and each 4 bytes. Each field is 4 bytes
+//        System.out.println("Class: " + classTreeNode.getName() + " and numFields: " + numFields);
         int size = 12 +  (4 * numFields);
         size = (int) Math.ceil(size/4.0) * 4; //Round up to the nearest 4
         assemblySupport.genWord(Integer.toString(size));
@@ -276,7 +309,7 @@ public class MipsCodeGenerator
     }
 
 
-    /*
+    /**
      * Generates class's dispatch template for the data section of a MIPS file and writes it to the output stream
      * @param classTreeNode is the ClassTreeNode corresponding to the class to have its dispatch table generated
      */
@@ -284,7 +317,9 @@ public class MipsCodeGenerator
         assemblySupport.genLabel(classTreeNode.getName()+ "_dispatch_table");
         MethodCollectorVisitor methodCollectorVisitor = new MethodCollectorVisitor();
         LinkedHashMap<String, String> methodsList = methodCollectorVisitor.getMethods(classTreeNode);
+//        System.out.println("Class: " + classTreeNode.getName() + " and numMethods: " + methodsList.size());
         methodsList.forEach((method, className) -> {
+            System.out.println(method);
             assemblySupport.genWord(className + "." + method);
         });
 
@@ -294,9 +329,6 @@ public class MipsCodeGenerator
         //that already has handled inheritance in insertion order.
 
     }
-
-
-
 
     public static void main(String[] args) {
         args = new String[]{"/Users/wyettmacdonald/Documents/Spring_19/CS461/CS461_Project13/Proj13/src/proj16DouglasMacDonaldZhang/test/UnusedTest.btm"};

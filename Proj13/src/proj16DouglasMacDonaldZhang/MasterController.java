@@ -183,7 +183,7 @@ public class MasterController {
 
                setMipsButtons();
             }
-            else if(file.getName().endsWith(".btm")){
+            else if(file.getName().endsWith(".btm")) {
                setBantamButtons();
             }
 

@@ -6,6 +6,7 @@
 
 class Main extends Parent{
 	String meh;
+	String meh2;
 
 	void blah(){
 		var goo = "Mah";
@@ -59,19 +60,17 @@ class Main extends Parent{
 		
 	}
 
-
-	
-	
+	void main(){
+	return;
+	}	
 }
 
 
 class Parent{
 	String parentStr = "Who's your daddy?";
+	String anotherString = "another one";
 
 	void god(){
-	return;
-	}
-	void main(){
 	return;
 	}
 }
