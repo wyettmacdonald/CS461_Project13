@@ -510,6 +510,7 @@ public class MasterController {
         this.findUsesButton.setDisable(true);
         this.findUnusedButton.setDisable(true);
         this.suggestNamesButton.setDisable(true);
+        this.compileButton.setDisable(true);
 
     }
 
