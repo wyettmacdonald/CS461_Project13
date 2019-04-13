@@ -5,11 +5,7 @@
 * Instruction class for MIPS
 */
 
-
-
-
 package proj17DouglasMacDonaldZhang.codegenmips;
-
 
 /*
 * Instruction class for storing MIPS instructions
