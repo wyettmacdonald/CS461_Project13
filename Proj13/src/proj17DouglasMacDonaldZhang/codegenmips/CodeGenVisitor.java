@@ -12,6 +12,7 @@ import proj17DouglasMacDonaldZhang.bantam.ast.*;
 import proj17DouglasMacDonaldZhang.bantam.semant.SemanticAnalyzer;
 import proj17DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
 import proj17DouglasMacDonaldZhang.bantam.util.ErrorHandler;
+import proj17DouglasMacDonaldZhang.bantam.util.Location;
 import proj17DouglasMacDonaldZhang.bantam.util.SymbolTable;
 import proj17DouglasMacDonaldZhang.bantam.visitor.Visitor;
 
@@ -22,7 +23,7 @@ public class CodeGenVisitor extends Visitor {
 
     private ClassTreeNode currentClass;
     private ErrorHandler errorHandler;
-    private SymbolTable currentSymbolTable;
+    private SymbolTable currentSymbolTable; //Symbol table of variable Locations
     private ArrayList<Instruction> instructionArrayList;
     private MipsSupport mipsSupport;
 
@@ -33,6 +34,7 @@ public class CodeGenVisitor extends Visitor {
         this.currentClass = root;
         this.instructionArrayList = instructions;
         this.mipsSupport = mipsSupport;
+        currentSymbolTable = new SymbolTable();
     }
     /**
      * Visit a class node
@@ -198,7 +200,47 @@ public class CodeGenVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(NewExpr node) {
+
+        //Push RA to the stack before calling clone method
+
+        //TODO Question for Dale - how do we know what registers to push onto the stack before calling a built-in method?
+        //TODO cont - how do I know what registers were in use before a New Expression, for instance?
+
+        Instruction cloneInstr = new Instruction("jal", "Object.clone");
+        instructionArrayList.add(cloneInstr);
+
         return null;
+    }
+
+
+    /*
+    * Handles storing the RA and storing the FP on the stack before a function call
+    *
+    */
+    private void pushReturnAndFP(){
+        moveSP();
+        Instruction storeRA = new Instruction("sw", "$ra");
+        storeRA.setOperand2("$sp");
+        instructionArrayList.add(storeRA);
+
+        moveSP();
+        Instruction storeFP = new Instruction("sw", "$fp");
+        storeRA.setOperand2("$sp");
+        instructionArrayList.add(storeFP);
+
+
+    }
+
+    /*
+    * Moves the stack pointer
+    */
+    private void moveSP(){
+        Instruction addInstr = new Instruction("addi", "$sp");
+        addInstr.setOperand2("$sp");
+        addInstr.setOperand3("-4");
+
+        instructionArrayList.add(addInstr);
+
     }
 
     /**
