@@ -7,12 +7,9 @@
 
 package proj17DouglasMacDonaldZhang.codegenmips;
 
-import com.sun.source.tree.ClassTree;
 import proj17DouglasMacDonaldZhang.bantam.ast.*;
-import proj17DouglasMacDonaldZhang.bantam.semant.SemanticAnalyzer;
 import proj17DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
 import proj17DouglasMacDonaldZhang.bantam.util.ErrorHandler;
-import proj17DouglasMacDonaldZhang.bantam.util.Location;
 import proj17DouglasMacDonaldZhang.bantam.util.SymbolTable;
 import proj17DouglasMacDonaldZhang.bantam.visitor.Visitor;
 
@@ -100,6 +97,32 @@ public class CodeGenVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(IfStmt node) {
+
+
+        String afterLabel = mipsSupport.getLabel(); //If there's an else, this is the else label
+
+        node.getPredExpr().accept(this); //This will store the result of the predicate in $v0
+        Instruction branchInstr;
+        //Since 0 is false, I'm assuming 1 is true TODO ASK DALE - ALSO IS THERE A SMARTER WAY OF DOING THIS
+
+        branchInstr = new Instruction("bgtz", afterLabel);
+        instructionArrayList.add(branchInstr);
+
+        //TODO How do we generate a label with the correct instructions following it if Instruction aren't generated till later?
+        //Should we count labels as instructions?
+        //Stopgap
+        instructionArrayList.add(new Instruction(afterLabel + ":", ""));
+
+        //Generate then code
+        node.getThenStmt().accept(this);
+
+        //If there's an else, generate the else code after the else label
+        if(node.getElseStmt() != null){
+            node.getElseStmt().accept(this);
+        }
+
+
+
         return null;
     }
 
@@ -205,9 +228,22 @@ public class CodeGenVisitor extends Visitor {
 
         //TODO Question for Dale - how do we know what registers to push onto the stack before calling a built-in method?
         //TODO cont - how do I know what registers were in use before a New Expression, for instance?
+        //todo does the built in handle the ra itself?
+        pushReturnAndFP();
+
+
 
         Instruction cloneInstr = new Instruction("jal", "Object.clone");
         instructionArrayList.add(cloneInstr);
+
+        //After cloning, get the pointer to the object
+
+        //Store locations of fields
+
+        //TODO does this count as a method call?
+        Instruction initInstr = new Instruction("jal", node.getType() + "._init_");
+        instructionArrayList.add(initInstr);
+
 
         return null;
     }
@@ -326,6 +362,7 @@ public class CodeGenVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryCompEqExpr node) {
+        makeBinaryInstr(node, "seq"); //set equal to
         return null;
     }
 
@@ -336,6 +373,8 @@ public class CodeGenVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryCompNeExpr node) {
+        //TODO is this reference correct - Is this extended mips?
+        makeBinaryInstr(node, "sne"); //set greater than
         return null;
     }
 
@@ -346,6 +385,7 @@ public class CodeGenVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryCompLtExpr node) {
+        makeBinaryInstr(node, "slt"); //set less than
         return null;
     }
 
@@ -357,6 +397,9 @@ public class CodeGenVisitor extends Visitor {
         return new String[]{type1,type2};
     }
 
+
+
+
     /**
      * Visit a binary comparison less than or equal to expression node
      *
@@ -364,6 +407,7 @@ public class CodeGenVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryCompLeqExpr node) {
+        makeBinaryInstr(node, "sle"); //set less than/equal to
         return null;
     }
 
@@ -374,6 +418,7 @@ public class CodeGenVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryCompGtExpr node) {
+        makeBinaryInstr(node, "sgt"); //set greater than
         return null;
     }
 
@@ -384,8 +429,41 @@ public class CodeGenVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryCompGeqExpr node) {
+        makeBinaryInstr(node, "sge"); //set greater than/ equal to
         return null;
     }
+
+
+
+
+    /*
+     * Produces the MIPS instructions for BinaryExpr nodes and adds them to the list
+     * TODO FILL OUT
+     */
+    private void makeBinaryInstr(BinaryExpr node, String instrType){
+        node.getLeftExpr().accept(this);
+
+        Instruction moveInstr = new Instruction("move", "$v1");
+        moveInstr.setOperand2("$v0");
+        instructionArrayList.add(moveInstr);
+
+        node.getRightExpr().accept(this);
+
+        if("div".equals(instrType)){
+            Instruction zeroCheckInstr = new Instruction("beq", "$zero");
+            zeroCheckInstr.setOperand2("$v1");
+            zeroCheckInstr.setOperand3("divide_zero_error");
+            instructionArrayList.add(zeroCheckInstr);
+            //TODO ask Dale if we're supposed to work it out at compile or do it my way - that won't work if it's user input, right?
+        }
+
+        //Dale's said this format works even for mult/div, and they'll just automatically move it from $lo to $v0
+        Instruction mathInstr = new Instruction(instrType, "$v0");
+        mathInstr.setOperand2("$v0");
+        mathInstr.setOperand3("$v1");
+        instructionArrayList.add(mathInstr);
+    }
+
 
     /**
      * Visit a binary arithmetic plus expression node
@@ -394,9 +472,9 @@ public class CodeGenVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryArithPlusExpr node) {
-        node.accept(this);
-        Instruction instruction = new Instruction("move", "$v1");
-        instruction.setOperand2("$v0");
+        makeBinaryInstr(node, "add");
+
+
         return null;
     }
 
@@ -407,8 +485,11 @@ public class CodeGenVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryArithMinusExpr node) {
+        makeBinaryInstr(node, "sub");
+
         return null;
     }
+
 
     /**
      * Visit a binary arithmetic times expression node
@@ -417,6 +498,8 @@ public class CodeGenVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryArithTimesExpr node) {
+        //TODO ASK DALE DO WE CARE ABOUT SIGNED/UNSIGNED MATH
+        makeBinaryInstr(node, "mult");
         return null;
     }
 
@@ -427,6 +510,7 @@ public class CodeGenVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryArithDivideExpr node) {
+        makeBinaryInstr(node, "div");
         return null;
     }
 
@@ -437,8 +521,18 @@ public class CodeGenVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryArithModulusExpr node) {
+        makeBinaryInstr(node, "div");
+        //The remainder is stored in $hi, according to an online reference on U of Idaho's site
+        //TODO ASK DALE ABOUT IF THIS IS CORRECT - I thought we were pretending hi doesn't exist?
+        Instruction getRemainInstr = new Instruction("move", "$v0");
+        getRemainInstr.setOperand2("$hi");
+        instructionArrayList.add(getRemainInstr);
+
         return null;
     }
+
+
+
 
     /**
      * Visit a binary logical AND expression node
@@ -447,6 +541,7 @@ public class CodeGenVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryLogicAndExpr node) {
+        makeBinaryInstr(node, "and");
         return null;
     }
 
@@ -457,6 +552,9 @@ public class CodeGenVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryLogicOrExpr node) {
+        //TODO Are we doing lazy evaluation or not? XOR?
+
+        makeBinaryInstr(node, "or");
         return null;
     }
 
@@ -510,6 +608,10 @@ public class CodeGenVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(ConstIntExpr node) {
+
+        Instruction intInstr = new Instruction("li", "$v0");
+        intInstr.setOperand2(node.getConstant());
+        instructionArrayList.add(intInstr);
         return null;
     }
 

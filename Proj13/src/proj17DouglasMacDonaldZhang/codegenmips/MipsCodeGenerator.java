@@ -244,6 +244,10 @@ public class MipsCodeGenerator
 
         out.println("\tjr $ra");
 
+
+        //After code gen is done, exit
+        this.assemblySupport.genSyscall(assemblySupport.SYSCALL_EXIT);
+
         out.flush();
         out.close();
 
