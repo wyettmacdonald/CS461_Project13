@@ -103,18 +103,19 @@ public class CodeGenVisitor extends Visitor {
 
         node.getPredExpr().accept(this); //This will store the result of the predicate in $v0
         Instruction branchInstr;
-        //Since 0 is false, I'm assuming 1 is true TODO ASK DALE - ALSO IS THERE A SMARTER WAY OF DOING THIS
 
-        branchInstr = new Instruction("bgtz", afterLabel);
+        branchInstr = new Instruction("bgtz", null, afterLabel); //If true
         instructionArrayList.add(branchInstr);
-
-        //TODO How do we generate a label with the correct instructions following it if Instruction aren't generated till later?
-        //Should we count labels as instructions?
-        //Stopgap
-        instructionArrayList.add(new Instruction(afterLabel + ":", ""));
 
         //Generate then code
         node.getThenStmt().accept(this);
+
+
+        //Making a no op just because I need something to attach the label to
+
+        //new Instruction("noop", new ArrayList<String>().add(afterLabel));
+
+        //instructionArrayList.add( );
 
         //If there's an else, generate the else code after the else label
         if(node.getElseStmt() != null){
@@ -233,7 +234,7 @@ public class CodeGenVisitor extends Visitor {
 
 
 
-        Instruction cloneInstr = new Instruction("jal", "Object.clone");
+        Instruction cloneInstr = new Instruction("jal", null, "Object.clone");
         instructionArrayList.add(cloneInstr);
 
         //After cloning, get the pointer to the object
@@ -241,7 +242,7 @@ public class CodeGenVisitor extends Visitor {
         //Store locations of fields
 
         //TODO does this count as a method call?
-        Instruction initInstr = new Instruction("jal", node.getType() + "._init_");
+        Instruction initInstr = new Instruction("jal", null, node.getType() + "._init_");
         instructionArrayList.add(initInstr);
 
 
@@ -255,13 +256,11 @@ public class CodeGenVisitor extends Visitor {
     */
     private void pushReturnAndFP(){
         moveSP();
-        Instruction storeRA = new Instruction("sw", "$ra");
-        storeRA.setOperand2("$sp");
+        Instruction storeRA = new Instruction("sw", null, "$ra", "$sp");
         instructionArrayList.add(storeRA);
 
         moveSP();
-        Instruction storeFP = new Instruction("sw", "$fp");
-        storeRA.setOperand2("$sp");
+        Instruction storeFP = new Instruction("sw", null, "$fp", "$sp");
         instructionArrayList.add(storeFP);
 
 
@@ -271,9 +270,7 @@ public class CodeGenVisitor extends Visitor {
     * Moves the stack pointer
     */
     private void moveSP(){
-        Instruction addInstr = new Instruction("addi", "$sp");
-        addInstr.setOperand2("$sp");
-        addInstr.setOperand3("-4");
+        Instruction addInstr = new Instruction("addi", null, "$sp", "sp", "-4");
 
         instructionArrayList.add(addInstr);
 
@@ -443,24 +440,19 @@ public class CodeGenVisitor extends Visitor {
     private void makeBinaryInstr(BinaryExpr node, String instrType){
         node.getLeftExpr().accept(this);
 
-        Instruction moveInstr = new Instruction("move", "$v1");
-        moveInstr.setOperand2("$v0");
+        Instruction moveInstr = new Instruction("move", null, "$v1", "$v0");
         instructionArrayList.add(moveInstr);
 
         node.getRightExpr().accept(this);
 
         if("div".equals(instrType)){
-            Instruction zeroCheckInstr = new Instruction("beq", "$zero");
-            zeroCheckInstr.setOperand2("$v1");
-            zeroCheckInstr.setOperand3("divide_zero_error");
+            Instruction zeroCheckInstr = new Instruction("beq", null, "$zero", "$v1", "divide_zero_error");
             instructionArrayList.add(zeroCheckInstr);
             //TODO ask Dale if we're supposed to work it out at compile or do it my way - that won't work if it's user input, right?
         }
 
         //Dale's said this format works even for mult/div, and they'll just automatically move it from $lo to $v0
-        Instruction mathInstr = new Instruction(instrType, "$v0");
-        mathInstr.setOperand2("$v0");
-        mathInstr.setOperand3("$v1");
+        Instruction mathInstr = new Instruction(instrType, null,"$v0", "$v0", "$v1");
         instructionArrayList.add(mathInstr);
     }
 
@@ -523,9 +515,7 @@ public class CodeGenVisitor extends Visitor {
     public Object visit(BinaryArithModulusExpr node) {
         makeBinaryInstr(node, "div");
         //The remainder is stored in $hi, according to an online reference on U of Idaho's site
-        //TODO ASK DALE ABOUT IF THIS IS CORRECT - I thought we were pretending hi doesn't exist?
-        Instruction getRemainInstr = new Instruction("move", "$v0");
-        getRemainInstr.setOperand2("$hi");
+        Instruction getRemainInstr = new Instruction("move", null, "$v0", "$hi");
         instructionArrayList.add(getRemainInstr);
 
         return null;
@@ -552,8 +542,6 @@ public class CodeGenVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryLogicOrExpr node) {
-        //TODO Are we doing lazy evaluation or not? XOR?
-
         makeBinaryInstr(node, "or");
         return null;
     }
@@ -609,8 +597,7 @@ public class CodeGenVisitor extends Visitor {
      */
     public Object visit(ConstIntExpr node) {
 
-        Instruction intInstr = new Instruction("li", "$v0");
-        intInstr.setOperand2(node.getConstant());
+        Instruction intInstr = new Instruction("li", null, "$v0", node.getConstant());
         instructionArrayList.add(intInstr);
         return null;
     }
