@@ -37,7 +37,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a class node
      *
      * @param node the class node
-     * @return result of the visit
+     * @return null
      */
     public Object visit(Class_ node) {
         // set the currentClass to this class
@@ -52,7 +52,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a field node
      *
      * @param node the field node
-     * @return result of the visit
+     * @return null
      */
     public Object visit(Field node) {
         return null;
@@ -62,7 +62,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a method node
      *
      * @param node the method node
-     * @return result of the visit
+     * @return null
      */
     public Object visit(Method node) {
         return null;
@@ -72,7 +72,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a formal node
      *
      * @param node the formal node
-     * @return result of the visit
+     * @return null
      */
     public Object visit(Formal node) {
         return null;
@@ -82,7 +82,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a declaration statement node
      *
      * @param node the declaration statement node
-     * @return result of the visit
+     * @return null
      */
     public Object visit(DeclStmt node) {
         Expr initExpr = node.getInit();
@@ -94,33 +94,40 @@ public class CodeGenVisitor extends Visitor {
      * Visit an if statement node
      *
      * @param node the if statement node
-     * @return result of the visit
+     * @return null
      */
     public Object visit(IfStmt node) {
 
-
-        String afterLabel = mipsSupport.getLabel(); //If there's an else, this is the else label
+        String elseLabel = mipsSupport.getLabel();
+        String afterLabel = mipsSupport.getLabel();
 
         node.getPredExpr().accept(this); //This will store the result of the predicate in $v0
         Instruction branchInstr;
 
-        branchInstr = new Instruction("bgtz", null, afterLabel); //If true
+        branchInstr = new Instruction("ble", null, "$v0", "$zero", elseLabel); //If false
         instructionArrayList.add(branchInstr);
 
         //Generate then code
         node.getThenStmt().accept(this);
+        //If true, skip over else if there is an else
+        instructionArrayList.add(new Instruction("jal", null, afterLabel));
 
-
-        //Making a no op just because I need something to attach the label to
-
-        //new Instruction("noop", new ArrayList<String>().add(afterLabel));
-
-        //instructionArrayList.add( );
 
         //If there's an else, generate the else code after the else label
+        //Making a no op just because I need something to attach the label to
+        ArrayList<String> labList = new ArrayList<String>();
+        labList.add(elseLabel);
+        instructionArrayList.add(new Instruction("noop", labList));
+
         if(node.getElseStmt() != null){
             node.getElseStmt().accept(this);
         }
+
+        labList = new ArrayList<String>();
+        labList.add(afterLabel);
+        instructionArrayList.add(new Instruction("noop", labList));
+
+
 
 
 
@@ -131,7 +138,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a while statement node
      *
      * @param node the while statement node
-     * @return result of the visit
+     * @return null
      */
     public Object visit(WhileStmt node) {
         return null;
@@ -141,7 +148,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a for statement node
      *
      * @param node the for statement node
-     * @return result of the visit
+     * @return null
      */
     public Object visit(ForStmt node) {
         return null;
@@ -151,7 +158,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a break statement node
      *
      * @param node the break statement node
-     * @return result of the visit
+     * @return null
      */
     public Object visit(BreakStmt node) {
         // jump to the return register address
@@ -162,7 +169,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a block statement node
      *
      * @param node the block statement node
-     * @return result of the visit
+     * @return null
      */
     public Object visit(BlockStmt node) {
         return null;
@@ -172,7 +179,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a return statement node
      *
      * @param node the return statement node
-     * @return result of the visit
+     * @return null
      */
     public Object visit(ReturnStmt node) {
         return null;
@@ -182,7 +189,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a dispatch expression node
      *
      * @param node the dispatch expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(DispatchExpr node) {
         return null;
@@ -205,7 +212,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a list node of expressions
      *
      * @param node the expression list node
-     * @return result of the visit
+     * @return null
      */
     public Object visit(ExprList node) {
         List<String> typesList = new ArrayList<>();
@@ -221,27 +228,18 @@ public class CodeGenVisitor extends Visitor {
      * Visit a new expression node
      *
      * @param node the new expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(NewExpr node) {
 
-        //Push RA to the stack before calling clone method
-
-        //TODO Question for Dale - how do we know what registers to push onto the stack before calling a built-in method?
-        //TODO cont - how do I know what registers were in use before a New Expression, for instance?
-        //todo does the built in handle the ra itself?
-        pushReturnAndFP();
-
-
+        //Push all registers in use to the stack
 
         Instruction cloneInstr = new Instruction("jal", null, "Object.clone");
         instructionArrayList.add(cloneInstr);
 
         //After cloning, get the pointer to the object
 
-        //Store locations of fields
 
-        //TODO does this count as a method call?
         Instruction initInstr = new Instruction("jal", null, node.getType() + "._init_");
         instructionArrayList.add(initInstr);
 
@@ -254,33 +252,49 @@ public class CodeGenVisitor extends Visitor {
     * Handles storing the RA and storing the FP on the stack before a function call
     *
     */
-    private void pushReturnAndFP(){
-        moveSP();
-        Instruction storeRA = new Instruction("sw", null, "$ra", "$sp");
-        instructionArrayList.add(storeRA);
+    private void pushReturnAddrAndFP(){
+        pushToStack("$ra");
+        //Instruction storeRA = new Instruction("sw", null, "$ra", "$sp");
+        //instructionArrayList.add(storeRA);
 
-        moveSP();
-        Instruction storeFP = new Instruction("sw", null, "$fp", "$sp");
-        instructionArrayList.add(storeFP);
+        pushToStack("$fp");
+        //Instruction storeFP = new Instruction("sw", null, "$fp", "$sp");
+       // instructionArrayList.add(storeFP);
 
 
     }
 
     /*
-    * Moves the stack pointer
-    */
-    private void moveSP(){
+     * Moves the stack pointer up by 1 word and puts the word that was in the given location in the stack
+     * @param destination should be a string representing a register
+     */
+    private void pushToStack(String location){
         Instruction addInstr = new Instruction("addi", null, "$sp", "sp", "-4");
+        instructionArrayList.add(addInstr);
+        Instruction storeInstr = new Instruction("sw", null, location, "$sp");
+        instructionArrayList.add(storeInstr);
 
+    }
+
+    /*
+     * Moves the stack pointer down by 1 word and puts the word that was at the top in the given destination
+     * @param destination should be a string representing a register
+     */
+    private void popFromStack(String destination){
+        Instruction loadInstr = new Instruction("lw", null, destination, "$sp");
+        instructionArrayList.add(loadInstr);
+        Instruction addInstr = new Instruction("addi", null, "$sp", "sp", "4");
         instructionArrayList.add(addInstr);
 
     }
+
+
 
     /**
      * Visit a new array expression node
      *
      * @param node the new array expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(NewArrayExpr node) {
         return null;
@@ -290,7 +304,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit an instanceof expression node
      *
      * @param node the instanceof expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(InstanceofExpr node) {
         return null;
@@ -300,7 +314,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a cast expression node
      *
      * @param node the cast expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(CastExpr node) {
         return null;
@@ -310,7 +324,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit an assignment expression node
      *
      * @param node the assignment expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(AssignExpr node) {
         String varType = null;
@@ -327,7 +341,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit an array assignment expression node
      *
      * @param node the array assignment expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(ArrayAssignExpr node) {
         return null;
@@ -337,7 +351,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a variable expression node
      *
      * @param node the variable expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(VarExpr node) {
         return null;
@@ -356,7 +370,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a binary comparison equals expression node
      *
      * @param node the binary comparison equals expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(BinaryCompEqExpr node) {
         makeBinaryInstr(node, "seq"); //set equal to
@@ -367,10 +381,9 @@ public class CodeGenVisitor extends Visitor {
      * Visit a binary comparison not equals expression node
      *
      * @param node the binary comparison not equals expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(BinaryCompNeExpr node) {
-        //TODO is this reference correct - Is this extended mips?
         makeBinaryInstr(node, "sne"); //set greater than
         return null;
     }
@@ -379,7 +392,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a binary comparison less than expression node
      *
      * @param node the binary comparison less than expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(BinaryCompLtExpr node) {
         makeBinaryInstr(node, "slt"); //set less than
@@ -401,7 +414,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a binary comparison less than or equal to expression node
      *
      * @param node the binary comparison less than or equal to expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(BinaryCompLeqExpr node) {
         makeBinaryInstr(node, "sle"); //set less than/equal to
@@ -412,7 +425,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a binary comparison greater than expression node
      *
      * @param node the binary comparison greater than expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(BinaryCompGtExpr node) {
         makeBinaryInstr(node, "sgt"); //set greater than
@@ -423,7 +436,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a binary comparison greater than or equal to expression node
      *
      * @param node the binary comparison greater to or equal to expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(BinaryCompGeqExpr node) {
         makeBinaryInstr(node, "sge"); //set greater than/ equal to
@@ -435,15 +448,37 @@ public class CodeGenVisitor extends Visitor {
 
     /*
      * Produces the MIPS instructions for BinaryExpr nodes and adds them to the list
+     * Handles short circuiting for BinaryLogic and divide by 0 for division as well
      * TODO FILL OUT
      */
     private void makeBinaryInstr(BinaryExpr node, String instrType){
         node.getLeftExpr().accept(this);
 
-        Instruction moveInstr = new Instruction("move", null, "$v1", "$v0");
-        instructionArrayList.add(moveInstr);
+        //Instead of storing in v1, store the first operand in the stack in case
+        // this is nested math expression that would overwrite $v1 with inner calculations
+        pushToStack("$v0");
+        instructionArrayList.add(new Instruction("sw", null, "$v0", "0($sp)"));
+
+        String shortCircLabel = null;
+        if ("and".equals(instrType) || "or".equals(instrType) ){
+            String condition;
+            shortCircLabel = mipsSupport.getLabel();
+            //Short-circuiting - branch to skip the right half if $v0 is > 0 (true) for OR and if $v0 <= 0 (false for AND
+            if("and".equals(instrType)){
+                condition = "ble";
+            }
+            else{
+                condition = "bgt";
+            }
+            Instruction branchInstr = new Instruction(condition, null, "$zero", "$v0", shortCircLabel);
+            instructionArrayList.add(branchInstr);
+
+        }
 
         node.getRightExpr().accept(this);
+
+
+        popFromStack("$v1");
 
         if("div".equals(instrType)){
             Instruction zeroCheckInstr = new Instruction("beq", null, "$zero", "$v1", "divide_zero_error");
@@ -452,8 +487,26 @@ public class CodeGenVisitor extends Visitor {
         }
 
         //Dale's said this format works even for mult/div, and they'll just automatically move it from $lo to $v0
+        //Bitwise AND and OR should still work here so long as I guarantee that 1 and 0 are the only values used for booleans
         Instruction mathInstr = new Instruction(instrType, null,"$v0", "$v0", "$v1");
         instructionArrayList.add(mathInstr);
+
+        if(shortCircLabel != null){
+            String value;
+            //If the label is executed, that means the AND is already false or the OR is already true
+            if("and".equals(instrType)){
+                value = "0";
+            }
+            else{
+                value = "1";
+            }
+            ArrayList<String> labels = new ArrayList<>();
+            labels.add(shortCircLabel);
+            Instruction branchInstr = new Instruction("li", labels, "$v0", value);
+            instructionArrayList.add(branchInstr);
+        }
+
+
     }
 
 
@@ -461,7 +514,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a binary arithmetic plus expression node
      *
      * @param node the binary arithmetic plus expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(BinaryArithPlusExpr node) {
         makeBinaryInstr(node, "add");
@@ -474,7 +527,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a binary arithmetic minus expression node
      *
      * @param node the binary arithmetic minus expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(BinaryArithMinusExpr node) {
         makeBinaryInstr(node, "sub");
@@ -487,10 +540,9 @@ public class CodeGenVisitor extends Visitor {
      * Visit a binary arithmetic times expression node
      *
      * @param node the binary arithmetic times expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(BinaryArithTimesExpr node) {
-        //TODO ASK DALE DO WE CARE ABOUT SIGNED/UNSIGNED MATH
         makeBinaryInstr(node, "mult");
         return null;
     }
@@ -499,7 +551,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a binary arithmetic divide expression node
      *
      * @param node the binary arithmetic divide expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(BinaryArithDivideExpr node) {
         makeBinaryInstr(node, "div");
@@ -510,7 +562,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a binary arithmetic modulus expression node
      *
      * @param node the binary arithmetic modulus expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(BinaryArithModulusExpr node) {
         makeBinaryInstr(node, "div");
@@ -528,7 +580,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a binary logical AND expression node
      *
      * @param node the binary logical AND expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(BinaryLogicAndExpr node) {
         makeBinaryInstr(node, "and");
@@ -539,7 +591,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a binary logical OR expression node
      *
      * @param node the binary logical OR expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(BinaryLogicOrExpr node) {
         makeBinaryInstr(node, "or");
@@ -550,7 +602,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a unary negation expression node
      *
      * @param node the unary negation expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(UnaryNegExpr node) {
         node.getExpr().accept(this);
@@ -561,7 +613,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a unary NOT expression node
      *
      * @param node the unary NOT expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(UnaryNotExpr node) {
         node.getExpr().accept(this);
@@ -572,7 +624,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a unary increment expression node
      *
      * @param node the unary increment expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(UnaryIncrExpr node) {
         return null;
@@ -582,7 +634,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a unary decrement expression node
      *
      * @param node the unary decrement expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(UnaryDecrExpr node) {
         node.getExpr().accept(this);
@@ -593,7 +645,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit an int constant expression node
      *
      * @param node the int constant expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(ConstIntExpr node) {
 
@@ -606,7 +658,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a boolean constant expression node
      *
      * @param node the boolean constant expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(ConstBooleanExpr node) {
         node.setExprType("boolean");
@@ -617,7 +669,7 @@ public class CodeGenVisitor extends Visitor {
      * Visit a string constant expression node
      *
      * @param node the string constant expression node
-     * @return the type of the expression
+     * @return null
      */
     public Object visit(ConstStringExpr node) {
         node.setExprType("String");
