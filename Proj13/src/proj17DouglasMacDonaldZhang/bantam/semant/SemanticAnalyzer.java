@@ -242,11 +242,9 @@ public class SemanticAnalyzer
                 continue; //no parent
             }
 
-            //TIA ADDITION
-            //System.out.println("Parent " + astNode.getParent() + " Node " + astNode.getName() );
+
             ClassTreeNode parentNode;
             if(astNode.getParent() == null){
-//                System.out.println(astNode.getName());
                 parentNode = classMap.get("Object");
                 treeNode.setParent(parentNode);
             }

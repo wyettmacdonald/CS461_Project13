@@ -23,7 +23,7 @@
    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
    PARTICULAR PURPOSE.
 */
-package proj17DouglasMacDonaldZhang.codegenmips;
+package proj17DouglasMacDonaldZhang.bantam.codegenmips;
 
 import proj17DouglasMacDonaldZhang.bantam.ast.Program;
 import proj17DouglasMacDonaldZhang.bantam.ast.Class_;
@@ -205,10 +205,11 @@ public class MipsCodeGenerator
 
         out.println();
 
+        Hashtable<String, Integer> idTable = new Hashtable<>();
+
         //Generate the class templates
         for(int i = 0; i < classList.size(); i ++){
             ClassTreeNode classTreeNode = classList.get(i); //Got a null pointer here once for some reason
-            //System.out.println(classTreeNode + " Name " + classTreeNode.getName() + " Map " + fieldMap);
             //Retrieving fields count here so that generateClassTemplate can be used independently
             // from fieldMap and FieldCounterVisitor
             int numFields = fieldMap.get(classTreeNode.getName());
@@ -217,6 +218,7 @@ public class MipsCodeGenerator
             out.println();
             assemblySupport.genComment("Dispatch table for " + classList.get(i).getName());
             generateDispatchTable(classTreeNode);
+            idTable.put(classTreeNode.getName(), i);
             out.println();
         }
 
@@ -243,6 +245,14 @@ public class MipsCodeGenerator
         }
 
         out.println("\tjr $ra");
+
+
+        CodeGenVisitor codeGenVisitor = new CodeGenVisitor(errorHandler, root.getClassMap(), assemblySupport, idTable);
+        ArrayList<Instruction> instrList = new ArrayList<Instruction>();
+        codeGenVisitor.generateCode(instrList);
+        instrList.forEach(instruction-> {
+            out.println(instruction.toString());
+        });
 
 
         //After code gen is done, exit

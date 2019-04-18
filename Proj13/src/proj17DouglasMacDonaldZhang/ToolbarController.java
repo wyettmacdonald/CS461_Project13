@@ -47,7 +47,7 @@ import java.util.concurrent.*;
 
 import javafx.concurrent.Task;
 import javafx.concurrent.Service;
-import proj17DouglasMacDonaldZhang.codegenmips.MipsCodeGenerator;
+import proj17DouglasMacDonaldZhang.bantam.codegenmips.MipsCodeGenerator;
 
 
 import java.io.File;

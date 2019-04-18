@@ -24,7 +24,7 @@
    PARTICULAR PURPOSE.
 */
 
-package proj17DouglasMacDonaldZhang.codegenmips;
+package proj17DouglasMacDonaldZhang.bantam.codegenmips;
 
 import java.io.PrintStream;
 

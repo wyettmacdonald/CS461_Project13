@@ -5,7 +5,7 @@
  * Class for collecting all the classes in a program, including the built-ins.
  */
 
-package proj17DouglasMacDonaldZhang.codegenmips;
+package proj17DouglasMacDonaldZhang.bantam.codegenmips;
 
 import proj17DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
 

@@ -5,7 +5,7 @@
 * Class for collecting all the methods of a class in correct inheritance order
 */
 
-package proj17DouglasMacDonaldZhang.codegenmips;
+package proj17DouglasMacDonaldZhang.bantam.codegenmips;
 
 import proj17DouglasMacDonaldZhang.bantam.ast.Class_;
 import proj17DouglasMacDonaldZhang.bantam.ast.Method;

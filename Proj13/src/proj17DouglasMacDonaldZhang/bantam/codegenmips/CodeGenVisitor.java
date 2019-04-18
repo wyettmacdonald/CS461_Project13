@@ -5,9 +5,8 @@
  * CodeGenVisitor class for MIPS
  */
 
-package proj17DouglasMacDonaldZhang.codegenmips;
+package proj17DouglasMacDonaldZhang.bantam.codegenmips;
 
-import org.reactfx.value.Var;
 import proj17DouglasMacDonaldZhang.bantam.ast.*;
 import proj17DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
 import proj17DouglasMacDonaldZhang.bantam.util.ErrorHandler;
@@ -15,24 +14,41 @@ import proj17DouglasMacDonaldZhang.bantam.util.SymbolTable;
 import proj17DouglasMacDonaldZhang.bantam.visitor.Visitor;
 
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
 public class CodeGenVisitor extends Visitor {
 
-    private ClassTreeNode currentClass;
+    private ClassTreeNode currentClass; //TODO remove unused fields
     private ErrorHandler errorHandler;
     private SymbolTable currentSymbolTable; //Symbol table of variable Locations
-    private ArrayList<Instruction> instructionArrayList;
+    private List<Instruction> instructionList;
     private MipsSupport mipsSupport;
+    Hashtable<String, Integer> idTable;
+    Hashtable<String, ClassTreeNode> classMap;
 
 
-    public CodeGenVisitor(ErrorHandler errorHandler, ClassTreeNode root, ArrayList<Instruction> instructions,
-                          MipsSupport mipsSupport) {
+
+    public CodeGenVisitor(ErrorHandler errorHandler, Hashtable<String, ClassTreeNode> classMap, ArrayList<Instruction> instructions,
+                          MipsSupport mipsSupport, Hashtable<String, Integer> idTable) {
         this.errorHandler = errorHandler;
-        this.currentClass = root;
-        this.instructionArrayList = instructions;
+
+        this.instructionList = instructions;
         this.mipsSupport = mipsSupport;
         currentSymbolTable = new SymbolTable();
+        this.idTable = idTable;
+        this.classMap = classMap;
+    }
+
+
+    public void generateCode(List<Instruction> instrList){
+        instructionList = instrList;
+        classMap.forEach( (className, classTreeNode) -> {
+            if(!classTreeNode.isBuiltIn()) {
+                classTreeNode.getASTNode().accept(this);
+            }
+        });
+
     }
     /**
      * Visit a class node
@@ -106,19 +122,21 @@ public class CodeGenVisitor extends Visitor {
         Instruction branchInstr;
 
         branchInstr = new Instruction("ble", null, "$v0", "$zero", elseLabel); //If false
-        instructionArrayList.add(branchInstr);
+        instructionList.add(branchInstr);
 
         //Generate then code
+        currentSymbolTable.enterScope();
         node.getThenStmt().accept(this);
+        currentSymbolTable.exitScope();
         //If true, skip over else if there is an else
-        instructionArrayList.add(new Instruction("jal", null, afterLabel));
+        instructionList.add(new Instruction("jal", null, afterLabel));
 
 
         //If there's an else, generate the else code after the else label
         //Making a no op just because I need something to attach the label to
         ArrayList<String> labList = new ArrayList<String>();
         labList.add(elseLabel);
-        instructionArrayList.add(new Instruction("noop", labList));
+        instructionList.add(new Instruction("noop", labList));
 
         if(node.getElseStmt() != null){
             node.getElseStmt().accept(this);
@@ -126,7 +144,7 @@ public class CodeGenVisitor extends Visitor {
 
         labList = new ArrayList<String>();
         labList.add(afterLabel);
-        instructionArrayList.add(new Instruction("noop", labList));
+        instructionList.add(new Instruction("noop", labList));
 
 
 
@@ -238,18 +256,18 @@ public class CodeGenVisitor extends Visitor {
         //TODO Push all registers in use to the stack
 
         Instruction cloneInstr = new Instruction("jal", null, "Object.clone");
-        instructionArrayList.add(cloneInstr);
+        instructionList.add(cloneInstr);
 
         //After cloning, get the pointer to the object from $v0 and move it to $a0 cause that's what Exceptions.s expects
         Instruction moveInstr = new Instruction("move", null, "$a0","$v0");
-        instructionArrayList.add(moveInstr);
+        instructionList.add(moveInstr);
 
 
         //TODO restore registers pushed on the stack
 
 
         Instruction initInstr = new Instruction("jal", null, node.getType() + "._init_");
-        instructionArrayList.add(initInstr);
+        instructionList.add(initInstr);
 
 
         return null;
@@ -276,7 +294,7 @@ public class CodeGenVisitor extends Visitor {
     */
     private void incrementSP(){
         //Making this a separate function because you need to push space on the stack for local vars without storing
-        instructionArrayList.add(new Instruction("addi", null, "$sp", "sp", "-4"));
+        instructionList.add(new Instruction("addi", null, "$sp", "sp", "-4"));
     }
 
     /*
@@ -285,7 +303,7 @@ public class CodeGenVisitor extends Visitor {
      */
     private void pushToStack(String location){
         incrementSP();
-        instructionArrayList.add(new Instruction("sw", null, location, "$sp"));
+        instructionList.add(new Instruction("sw", null, location, "$sp"));
 
     }
 
@@ -295,9 +313,9 @@ public class CodeGenVisitor extends Visitor {
      */
     private void popFromStack(String destination){
         Instruction loadInstr = new Instruction("lw", null, destination, "$sp");
-        instructionArrayList.add(loadInstr);
+        instructionList.add(loadInstr);
         Instruction addInstr = new Instruction("addi", null, "$sp", "sp", "4");
-        instructionArrayList.add(addInstr);
+        instructionList.add(addInstr);
 
     }
 
@@ -320,6 +338,28 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(InstanceofExpr node) {
+        node.getExpr().accept(this);
+        //This should put the expr location in $v0
+        //Very first word should be its type, so load the first word into $v0
+        instructionList.add(new Instruction("lw", null, "$v0", "$v0"));
+        String typeName = node.getType();
+        int typeID = idTable.get(typeName);
+        instructionList.add(new Instruction("li", null, "$v1", Integer.toString(typeID) ));
+        int numDescendants = classMap.get(typeName).getNumDescendants();
+        instructionList.add(new Instruction("li", null, "$t0", Integer.toString(numDescendants) ));
+        instructionList.add(new Instruction("add", null, "$t0", "$v1", "$t0"));
+        //At this point, $v1 will store the class id of the type you're checking against
+        // and $t0 will store the id of the last class which could be its descendant
+        //$v0 will store the class id of the expression type
+
+        //So check if expression ($v0) is <= the limit ($t0) AND expression ($v0) >= class id ($v1)
+        instructionList.add(new Instruction("sle", null, "$t1", "$v0", "$t0"));
+        instructionList.add(new Instruction("sge", null, "$t2", "$v0", "$v1"));
+        instructionList.add(new Instruction("and", null, "$v0", "$t2", "$t1"));
+
+        //TODO Make sure that no one expects semi-permanent storage in $v1 or $t0
+        //TODO WHY DOES UPCHECK MATTER?
+
         return null;
     }
 
@@ -486,7 +526,7 @@ public class CodeGenVisitor extends Visitor {
                 condition = "bgt";
             }
             Instruction branchInstr = new Instruction(condition, null, "$zero", "$v0", shortCircLabel);
-            instructionArrayList.add(branchInstr);
+            instructionList.add(branchInstr);
 
         }
 
@@ -497,13 +537,13 @@ public class CodeGenVisitor extends Visitor {
 
         if("div".equals(instrType)){
             Instruction zeroCheckInstr = new Instruction("beq", null, "$zero", "$v1", "divide_zero_error");
-            instructionArrayList.add(zeroCheckInstr);
+            instructionList.add(zeroCheckInstr);
         }
 
         //Dale's said this format works even for mult/div, and they'll just automatically move it from $lo to $v0
         //Bitwise AND and OR should still work here so long as I guarantee that 1 and 0 are the only values used for booleans
         Instruction mathInstr = new Instruction(instrType, null,"$v0", "$v0", "$v1");
-        instructionArrayList.add(mathInstr);
+        instructionList.add(mathInstr);
 
         if(shortCircLabel != null){
             String value;
@@ -517,7 +557,7 @@ public class CodeGenVisitor extends Visitor {
             ArrayList<String> labels = new ArrayList<>();
             labels.add(shortCircLabel);
             Instruction branchInstr = new Instruction("li", labels, "$v0", value);
-            instructionArrayList.add(branchInstr);
+            instructionList.add(branchInstr);
         }
 
 
@@ -580,7 +620,7 @@ public class CodeGenVisitor extends Visitor {
         makeBinaryInstr(node, "div");
         //The remainder is stored in $hi, according to an online reference on U of Idaho's site
         Instruction getRemainInstr = new Instruction("move", null, "$v0", "$hi");
-        instructionArrayList.add(getRemainInstr);
+        instructionList.add(getRemainInstr);
 
         return null;
     }
@@ -623,10 +663,10 @@ public class CodeGenVisitor extends Visitor {
         node.getExpr().accept(this);
         //Evaluating the expression should also put the value of the variable in $v0
         if("not".equals(instrType) || "neg".equals(instrType)){
-            instructionArrayList.add(new Instruction(instrType,null, "$v0", "$v0"));
+            instructionList.add(new Instruction(instrType,null, "$v0", "$v0"));
         }
         else {
-            instructionArrayList.add(new Instruction(instrType, null, "$v0", "1"));
+            instructionList.add(new Instruction(instrType, null, "$v0", "1"));
         }
 
         //Updating the variable's value - casting with Dale's permission
@@ -653,10 +693,10 @@ public class CodeGenVisitor extends Visitor {
         if(node.isPostfix()){
             //If there any other expressions on the line, since they'll assume $v0 has the value, revert $v0 to old value
             if("addi".equals(instrType)) {
-                instructionArrayList.add(new Instruction("subi", null, "$v0", "1"));
+                instructionList.add(new Instruction("subi", null, "$v0", "1"));
             }
             else{
-                instructionArrayList.add(new Instruction("addi", null, "$v0", "1"));
+                instructionList.add(new Instruction("addi", null, "$v0", "1"));
             }
         }
     }
@@ -716,7 +756,7 @@ public class CodeGenVisitor extends Visitor {
     public Object visit(ConstIntExpr node) {
 
         Instruction intInstr = new Instruction("li", null, "$v0", node.getConstant());
-        instructionArrayList.add(intInstr);
+        instructionList.add(intInstr);
         return null;
     }
 

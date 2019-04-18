@@ -5,7 +5,7 @@
 * Instruction class for MIPS
 */
 
-package proj17DouglasMacDonaldZhang.codegenmips;
+package proj17DouglasMacDonaldZhang.bantam.codegenmips;
 
 /*
 * Instruction class for storing MIPS instructions
@@ -17,7 +17,7 @@ public class Instruction {
 
     private String command; //The action to be performed, named command to help distinguish it from the class
     private String[] operands;
-    private ArrayList<String> labels; //A list because there may be empty labels needed
+    private ArrayList<String> labels; //A list because there may be empty labels needed //TODO SEE IF THERE IS ANY CASE WHERE THIS IS NEEDED
 
     /*
     * Constructor for Instruction class

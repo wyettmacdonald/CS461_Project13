@@ -6,7 +6,7 @@
  * Date: April 4, 2019
  */
 
-package proj17DouglasMacDonaldZhang.codegenmips;
+package proj17DouglasMacDonaldZhang.bantam.codegenmips;
 
 import proj17DouglasMacDonaldZhang.bantam.ast.*;
 import proj17DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
