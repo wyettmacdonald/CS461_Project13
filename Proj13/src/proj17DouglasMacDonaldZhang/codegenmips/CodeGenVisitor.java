@@ -7,6 +7,7 @@
 
 package proj17DouglasMacDonaldZhang.codegenmips;
 
+import org.reactfx.value.Var;
 import proj17DouglasMacDonaldZhang.bantam.ast.*;
 import proj17DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
 import proj17DouglasMacDonaldZhang.bantam.util.ErrorHandler;
@@ -232,12 +233,19 @@ public class CodeGenVisitor extends Visitor {
      */
     public Object visit(NewExpr node) {
 
-        //Push all registers in use to the stack
+        // TODO Where do you get the object from in Object.clone for the method call? What about general built-ins? - Load the one from the .data section
+
+        //TODO Push all registers in use to the stack
 
         Instruction cloneInstr = new Instruction("jal", null, "Object.clone");
         instructionArrayList.add(cloneInstr);
 
-        //After cloning, get the pointer to the object
+        //After cloning, get the pointer to the object from $v0 and move it to $a0 cause that's what Exceptions.s expects
+        Instruction moveInstr = new Instruction("move", null, "$a0","$v0");
+        instructionArrayList.add(moveInstr);
+
+
+        //TODO restore registers pushed on the stack
 
 
         Instruction initInstr = new Instruction("jal", null, node.getType() + "._init_");
@@ -249,8 +257,8 @@ public class CodeGenVisitor extends Visitor {
 
 
     /*
+    * Internal helper function
     * Handles storing the RA and storing the FP on the stack before a function call
-    *
     */
     private void pushReturnAddrAndFP(){
         pushToStack("$ra");
@@ -260,8 +268,15 @@ public class CodeGenVisitor extends Visitor {
         pushToStack("$fp");
         //Instruction storeFP = new Instruction("sw", null, "$fp", "$sp");
        // instructionArrayList.add(storeFP);
+    }
 
 
+    /*
+    * Increments stack pointer by a word
+    */
+    private void incrementSP(){
+        //Making this a separate function because you need to push space on the stack for local vars without storing
+        instructionArrayList.add(new Instruction("addi", null, "$sp", "sp", "-4"));
     }
 
     /*
@@ -269,10 +284,8 @@ public class CodeGenVisitor extends Visitor {
      * @param destination should be a string representing a register
      */
     private void pushToStack(String location){
-        Instruction addInstr = new Instruction("addi", null, "$sp", "sp", "-4");
-        instructionArrayList.add(addInstr);
-        Instruction storeInstr = new Instruction("sw", null, location, "$sp");
-        instructionArrayList.add(storeInstr);
+        incrementSP();
+        instructionArrayList.add(new Instruction("sw", null, location, "$sp"));
 
     }
 
@@ -447,9 +460,12 @@ public class CodeGenVisitor extends Visitor {
 
 
     /*
+     * Private internal function only to be used by the visit methods for BinaryNodes
      * Produces the MIPS instructions for BinaryExpr nodes and adds them to the list
-     * Handles short circuiting for BinaryLogic and divide by 0 for division as well
-     * TODO FILL OUT
+     * Handles short circuiting for BinaryLogic and potential divide by 0 error for division as well
+     * @param node is a BinaryExpr node that should get instructions generated for it
+     * @param instrType is a String representing the MIPS instruction corresponding to the primary function of the node
+     * Ex: "slt" (set less than, for BinaryCompLtExpr)
      */
     private void makeBinaryInstr(BinaryExpr node, String instrType){
         node.getLeftExpr().accept(this);
@@ -457,7 +473,6 @@ public class CodeGenVisitor extends Visitor {
         //Instead of storing in v1, store the first operand in the stack in case
         // this is nested math expression that would overwrite $v1 with inner calculations
         pushToStack("$v0");
-        instructionArrayList.add(new Instruction("sw", null, "$v0", "0($sp)"));
 
         String shortCircLabel = null;
         if ("and".equals(instrType) || "or".equals(instrType) ){
@@ -483,7 +498,6 @@ public class CodeGenVisitor extends Visitor {
         if("div".equals(instrType)){
             Instruction zeroCheckInstr = new Instruction("beq", null, "$zero", "$v1", "divide_zero_error");
             instructionArrayList.add(zeroCheckInstr);
-            //TODO ask Dale if we're supposed to work it out at compile or do it my way - that won't work if it's user input, right?
         }
 
         //Dale's said this format works even for mult/div, and they'll just automatically move it from $lo to $v0
@@ -518,8 +532,6 @@ public class CodeGenVisitor extends Visitor {
      */
     public Object visit(BinaryArithPlusExpr node) {
         makeBinaryInstr(node, "add");
-
-
         return null;
     }
 
@@ -598,6 +610,57 @@ public class CodeGenVisitor extends Visitor {
         return null;
     }
 
+
+    /**
+     * Helper method. Should only be called by the visit methods for UnaryNodes
+     * Handles making MIPs instructions for any of the UnaryNodes
+     * This includes handling postfix operations
+     * @param node is a UnaryNode for which MIPS should be generated
+     * @param instrType is a String representing the MIPS instruction corresponding to the primary function of the node
+     * It can be "addi" (for increment), "subi" (for decrement), "not" or "neg"
+     */
+    private void makeUnaryInstr(UnaryExpr node, String instrType){
+        node.getExpr().accept(this);
+        //Evaluating the expression should also put the value of the variable in $v0
+        if("not".equals(instrType) || "neg".equals(instrType)){
+            instructionArrayList.add(new Instruction(instrType,null, "$v0", "$v0"));
+        }
+        else {
+            instructionArrayList.add(new Instruction(instrType, null, "$v0", "1"));
+        }
+
+        //Updating the variable's value - casting with Dale's permission
+        VarExpr var = (VarExpr) node.getExpr();
+        String varLoc;
+        Expr ref;
+        if((ref = var.getRef()) == null){
+            varLoc = (String) currentSymbolTable.lookup(var.getName());
+        }
+        else{
+            VarExpr refExpr = (VarExpr) ref;
+            if("this".equals( refExpr.getName() ) ){
+                varLoc = (String) currentSymbolTable.lookup(var.getName());
+            }
+            else{ //It's "super"
+                varLoc = (String) currentSymbolTable.lookup(var.getName(), 0); //Look it up in the parent //TODO make sure this works to get the parent
+            }
+
+            Instruction updateInstr = new Instruction("sw", null, varLoc,"$v0");
+
+        }
+
+
+        if(node.isPostfix()){
+            //If there any other expressions on the line, since they'll assume $v0 has the value, revert $v0 to old value
+            if("addi".equals(instrType)) {
+                instructionArrayList.add(new Instruction("subi", null, "$v0", "1"));
+            }
+            else{
+                instructionArrayList.add(new Instruction("addi", null, "$v0", "1"));
+            }
+        }
+    }
+
     /**
      * Visit a unary negation expression node
      *
@@ -605,7 +668,7 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(UnaryNegExpr node) {
-        node.getExpr().accept(this);
+        makeUnaryInstr(node, "neg");
         return null;
     }
 
@@ -616,8 +679,8 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(UnaryNotExpr node) {
-        node.getExpr().accept(this);
-        return null;
+       makeUnaryInstr(node, "not");
+       return null;
     }
 
     /**
@@ -627,8 +690,11 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(UnaryIncrExpr node) {
-        return null;
+       makeUnaryInstr(node, "addi");
+       return null;
     }
+
+
 
     /**
      * Visit a unary decrement expression node
@@ -637,7 +703,7 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(UnaryDecrExpr node) {
-        node.getExpr().accept(this);
+        makeUnaryInstr(node, "subi");
         return null;
     }
 
