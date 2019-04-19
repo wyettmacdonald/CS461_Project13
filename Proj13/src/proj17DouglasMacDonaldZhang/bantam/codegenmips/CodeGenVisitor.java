@@ -8,14 +8,19 @@
 package proj17DouglasMacDonaldZhang.bantam.codegenmips;
 
 import proj17DouglasMacDonaldZhang.bantam.ast.*;
+import proj17DouglasMacDonaldZhang.bantam.semant.NumLocalVarsVisitor;
 import proj17DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
 import proj17DouglasMacDonaldZhang.bantam.util.ErrorHandler;
+import proj17DouglasMacDonaldZhang.bantam.util.Location;
 import proj17DouglasMacDonaldZhang.bantam.util.SymbolTable;
 import proj17DouglasMacDonaldZhang.bantam.visitor.Visitor;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
+import java.util.Stack;
 
 public class CodeGenVisitor extends Visitor {
 
@@ -26,29 +31,55 @@ public class CodeGenVisitor extends Visitor {
     private MipsSupport mipsSupport;
     Hashtable<String, Integer> idTable;
     Hashtable<String, ClassTreeNode> classMap;
+    private Stack<String> labelStack;
+    private Map<String, Integer> varMap;
+    private Stack<String> usedTRegs;
+    private Stack<String> unusedTRegs;
+    private Stack<String> usedARegs;
+    private Stack<String> unusedARegs;
 
 
-
-    public CodeGenVisitor(ErrorHandler errorHandler, Hashtable<String, ClassTreeNode> classMap, ArrayList<Instruction> instructions,
-                          MipsSupport mipsSupport, Hashtable<String, Integer> idTable) {
+    public CodeGenVisitor(ErrorHandler errorHandler, Hashtable<String, ClassTreeNode> classMap,
+                          MipsSupport mipsSupport, Map<String, Integer> numLocalVarsVisitor ) {
         this.errorHandler = errorHandler;
 
-        this.instructionList = instructions;
+//        this.instructionList = instructions;
         this.mipsSupport = mipsSupport;
         currentSymbolTable = new SymbolTable();
         this.idTable = idTable;
         this.classMap = classMap;
+        this.currentSymbolTable = new SymbolTable();
+        this.labelStack = new Stack<>();
+        this.varMap = numLocalVarsVisitor;
+        unusedTRegs = new Stack<>();
+        usedTRegs = new Stack<>();
+        unusedARegs = new Stack<>();
+        usedARegs = new Stack<>();
+    }
+
+    public void createStacks() {
+        for(int i = 0; i < 4; i++) {
+            unusedARegs.push("a" + i);
+        }
+        for(int i = 0; i < 10; i++) {
+            unusedARegs.push("t" + i);
+        }
     }
 
 
     public void generateCode(List<Instruction> instrList){
-        instructionList = instrList;
+        createStacks();
+        this.instructionList = instrList;
         classMap.forEach( (className, classTreeNode) -> {
             if(!classTreeNode.isBuiltIn()) {
                 classTreeNode.getASTNode().accept(this);
             }
         });
+    }
 
+    public Object startVisit(ClassTreeNode currentClass) {
+        currentClass.getASTNode().accept(this);
+        return null;
     }
     /**
      * Visit a class node
@@ -82,7 +113,54 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(Method node) {
+        // generate prologue code
+        // generate code for method body
+        // generate epilogue code
+        // mips return statement
+        generatePrologue();
+        pushReturnAddrAndFP();
+        // compute the reference and push on the stack
+        node.getFormalList().accept(this);
+//        int numLocalVars = varMap.get(currentClass.getName() + "." + node.getName());
+//        String space = Integer.toString(numLocalVars*4);
+//        instructionList.add(new Instruction("addi", null, "$sp", "sp", space));
+        // initialize sp and fp
+        node.getStmtList().accept(this);
+
         return null;
+    }
+
+    public void generatePrologue() {
+        for (String reg: usedARegs) {
+            pushToStack(reg);
+        }
+        for (String reg: usedTRegs) {
+            pushToStack(reg);
+        }
+    }
+
+    /**
+     * Returns the next available T register
+     * Adds it to the used stack
+     *
+     * @return String next available T register
+     */
+    public String getTReg() {
+        String theReg = unusedTRegs.pop();
+        usedTRegs.push(theReg);
+        return theReg;
+    }
+
+    /**
+     * Returns the next available A register
+     * Adds it to the used stack
+     *
+     * @return String next available A register
+     */
+    public String getAReg() {
+        String theReg = unusedARegs.pop();
+        usedARegs.push(theReg);
+        return theReg;
     }
 
     /**
@@ -92,6 +170,9 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(Formal node) {
+        String reg = getAReg();
+        instructionList.add(new Instruction("li", null, reg, node.getName()));
+        pushToStack(reg);
         return null;
     }
 
@@ -104,6 +185,8 @@ public class CodeGenVisitor extends Visitor {
     public Object visit(DeclStmt node) {
         Expr initExpr = node.getInit();
         initExpr.accept(this);
+        // declaring variable, won't appear any earlier
+
         return null;
     }
 
@@ -160,6 +243,37 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(WhileStmt node) {
+
+        // g: gen code for A
+        // if $v0 == 0 go to h
+        // gen code for C
+        // go to g
+        // h:
+
+        String whileLabel = mipsSupport.getLabel();
+        String afterLabel = mipsSupport.getLabel();
+        labelStack.push(afterLabel);
+        ArrayList<String> labels = new ArrayList<>();
+        labels.add(whileLabel);
+
+        Instruction instruction = new Instruction("", labels, "");
+        instructionList.add(instruction);
+        node.getPredExpr().accept(this); // stores result in $v0
+
+        Instruction theInstruction = new Instruction("ble", null, "$v0", "$zero", afterLabel);
+        instructionList.add(theInstruction);
+        node.getBodyStmt().accept(this);
+        Instruction bodyInstruction = new Instruction("j", null, whileLabel);
+        instructionList.add(bodyInstruction);
+        labels = new ArrayList<>();
+        labels.add(afterLabel);
+
+        Instruction afterInstruction = new Instruction("", labels, "");
+        instructionList.add(afterInstruction);
+        if(labelStack.peek().equals(afterLabel)) {
+            labelStack.pop();
+        }
+
         return null;
     }
 
@@ -170,6 +284,37 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(ForStmt node) {
+
+        String loopLabel = mipsSupport.getLabel();
+        String afterLabel = mipsSupport.getLabel();
+        labelStack.push(afterLabel);
+        // push afterlabel on the stack
+
+        node.getInitExpr().accept(this);
+
+        ArrayList<String> labels = new ArrayList<>();
+        labels.add(loopLabel);
+        instructionList.add(new Instruction("", labels, ""));
+        node.getPredExpr().accept(this);
+
+        Instruction branchInstr = new Instruction("bgtz", null, afterLabel);
+        instructionList.add(branchInstr);
+
+        //Generate then code
+        node.getBodyStmt().accept(this);
+        node.getUpdateExpr().accept(this);
+        Instruction uncond = new Instruction("j", null, loopLabel);
+        instructionList.add(uncond);
+
+        // pop after label off stack
+        if(labelStack.peek().equals(afterLabel)) {
+            labelStack.pop();
+        }
+
+        labels = new ArrayList<>();
+        labels.add(afterLabel);
+        instructionList.add(new Instruction("", labels, "'"));
+
         return null;
     }
 
@@ -180,7 +325,12 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(BreakStmt node) {
-        // jump to the return register address
+        // jump to the end of loop
+        // create a stack of labels and pop the top label off here
+        String jumpTo = labelStack.pop();
+        Instruction breakInstr = new Instruction("j", null, jumpTo);
+        instructionList.add(breakInstr);
+
         return null;
     }
 
@@ -201,6 +351,7 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(ReturnStmt node) {
+        instructionList.add(new Instruction("j", null, "$ra"));
         return null;
     }
 
@@ -211,6 +362,20 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(DispatchExpr node) {
+        // <E1>.foo(E2, E3);
+        // visit E1, put result in $a0
+        // check for E1 is null, if so error
+        // visit E2 and push on stack
+        // visit E3 and push on stack
+        // save any registers $t and $v
+        // get the address of vft from the object $a0
+        // get address of desired method as offset from start of vft
+        // and put it in $t0, for example
+        // call jalr $t0
+
+        node.getRefExpr().accept(this);
+        // check if E1 is null, if so error
+
         return null;
     }
 
@@ -281,11 +446,11 @@ public class CodeGenVisitor extends Visitor {
     private void pushReturnAddrAndFP(){
         pushToStack("$ra");
         //Instruction storeRA = new Instruction("sw", null, "$ra", "$sp");
-        //instructionArrayList.add(storeRA);
+        //instructionList.add(storeRA);
 
         pushToStack("$fp");
         //Instruction storeFP = new Instruction("sw", null, "$fp", "$sp");
-       // instructionArrayList.add(storeFP);
+       // instructionList.add(storeFP);
     }
 
 
@@ -370,6 +535,10 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(CastExpr node) {
+
+        Expr expr = node.getExpr();
+        Integer lineNum = node.getLineNum();
+        ClassCastException castException = new ClassCastException();
         return null;
     }
 
@@ -387,16 +556,14 @@ public class CodeGenVisitor extends Visitor {
         // typecheck the expr and check compatability
         node.getExpr().accept(this);
 
-        return null;
-    }
+        // look up location of variable (say $fp and offset 4)
+        // generates sw $v0 4($fp)
+        Instruction saveInstruction = new Instruction("sw", null, "$v0", "4($fp");
+        instructionList.add(saveInstruction);
 
-    /**
-     * Visit an array assignment expression node
-     *
-     * @param node the array assignment expression node
-     * @return null
-     */
-    public Object visit(ArrayAssignExpr node) {
+        // y.x = 3 + 5
+        // Look up type field of reference expression y
+        // Look up offset of x in that class
         return null;
     }
 
@@ -499,7 +666,7 @@ public class CodeGenVisitor extends Visitor {
 
 
 
-    /*
+    /**
      * Private internal function only to be used by the visit methods for BinaryNodes
      * Produces the MIPS instructions for BinaryExpr nodes and adds them to the list
      * Handles short circuiting for BinaryLogic and potential divide by 0 error for division as well
@@ -673,6 +840,7 @@ public class CodeGenVisitor extends Visitor {
         VarExpr var = (VarExpr) node.getExpr();
         String varLoc;
         Expr ref;
+        currentSymbolTable.enterScope();
         if((ref = var.getRef()) == null){
             varLoc = (String) currentSymbolTable.lookup(var.getName());
         }
@@ -693,12 +861,13 @@ public class CodeGenVisitor extends Visitor {
         if(node.isPostfix()){
             //If there any other expressions on the line, since they'll assume $v0 has the value, revert $v0 to old value
             if("addi".equals(instrType)) {
-                instructionList.add(new Instruction("subi", null, "$v0", "1"));
-            }
-            else{
                 instructionList.add(new Instruction("addi", null, "$v0", "1"));
             }
+            else{
+                instructionList.add(new Instruction("subi", null, "$v0", "1"));
+            }
         }
+        currentSymbolTable.exitScope();
     }
 
     /**

@@ -37,12 +37,14 @@ public class Instruction {
     */
     public String toString(){
         String mipsInstr = "";
-        for(int i = 0; i< labels.size(); i++){
-            mipsInstr += labels.get(i) + ":\n";
+        if(labels != null) {
+            for (int i = 0; i < labels.size(); i++) {
+                mipsInstr += "\n" + labels.get(i) + ":";
+            }
         }
-        mipsInstr += command;
+        mipsInstr += "\t" + command + " ";
         for(int i = 0; i< operands.length; i++){
-            mipsInstr += operands[i];
+            mipsInstr += operands[i] + " ";
         }
         return mipsInstr;
     }

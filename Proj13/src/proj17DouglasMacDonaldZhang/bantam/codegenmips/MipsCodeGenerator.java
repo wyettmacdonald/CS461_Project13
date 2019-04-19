@@ -27,7 +27,10 @@ package proj17DouglasMacDonaldZhang.bantam.codegenmips;
 
 import proj17DouglasMacDonaldZhang.bantam.ast.Program;
 import proj17DouglasMacDonaldZhang.bantam.ast.Class_;
+import proj17DouglasMacDonaldZhang.bantam.codegenmips.CodeGenVisitor;
+import proj17DouglasMacDonaldZhang.bantam.codegenmips.Instruction;
 import proj17DouglasMacDonaldZhang.bantam.parser.Parser;
+import proj17DouglasMacDonaldZhang.bantam.semant.NumLocalVarsVisitor;
 import proj17DouglasMacDonaldZhang.bantam.semant.SemanticAnalyzer;
 import proj17DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
 import proj17DouglasMacDonaldZhang.bantam.util.CompilationException;
@@ -92,6 +95,10 @@ public class MipsCodeGenerator
      * to keep track of where the main method is
      */
     private String theMainMethod;
+
+    private ArrayList<Instruction> instructionList;
+
+    private Map<String, Integer> varMap;
 
     /**
      * MipsCodeGenerator constructor
@@ -210,6 +217,7 @@ public class MipsCodeGenerator
         //Generate the class templates
         for(int i = 0; i < classList.size(); i ++){
             ClassTreeNode classTreeNode = classList.get(i); //Got a null pointer here once for some reason
+            //System.out.println(classTreeNode + " Name " + classTreeNode.getName() + " Map " + fieldMap);
             //Retrieving fields count here so that generateClassTemplate can be used independently
             // from fieldMap and FieldCounterVisitor
             int numFields = fieldMap.get(classTreeNode.getName());
@@ -245,6 +253,7 @@ public class MipsCodeGenerator
         }
 
         out.println("\tjr $ra");
+        out.println();
 
 
         CodeGenVisitor codeGenVisitor = new CodeGenVisitor(errorHandler, root.getClassMap(), assemblySupport, idTable);
@@ -336,7 +345,7 @@ public class MipsCodeGenerator
      * @param args
      */
     public static void main(String[] args) {
-        args = new String[]{"/Users/wyettmacdonald/Documents/Spring_19/CS461/CS461_Project13/Proj13/src/proj17DouglasMacDonaldZhang/test/UnusedTest.btm"};
+        args = new String[]{"/Users/wyettmacdonald/Documents/Spring_19/CS461/CS461_Project13/Proj13/src/proj17DouglasMacDonaldZhang/test/GenTest.btm"};
         ErrorHandler errorHandler = new ErrorHandler();
         Parser parser = new Parser(errorHandler);
         SemanticAnalyzer analyzer = new SemanticAnalyzer(errorHandler);
