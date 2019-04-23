@@ -852,16 +852,25 @@ public class CodeGenVisitor extends Visitor {
                 varLoc = (String) currentSymbolTable.lookup(var.getName(), 0); //Look it up in the parent
             }
         }
+
+        //Get the variable val into $v0, perform the incr/decr, then write the new val into memory
+        instructionList.add(new Instruction("lw", null, "$v0", varLoc));
+        if("addi".equals(instrType)) {
+            instructionList.add(new Instruction("addi", null, "$v0", "1"));
+        }
+        else{
+            instructionList.add(new Instruction("subi", null, "$v0", "1"));
+        }
         instructionList.add(new Instruction("sw", null, varLoc,"$v0"));
 
 
         if(node.isPostfix()){
             //If there any other expressions on the line, since they'll assume $v0 has the value, revert $v0 to old value
             if("addi".equals(instrType)) {
-                instructionList.add(new Instruction("addi", null, "$v0", "1"));
+                instructionList.add(new Instruction("subi", null, "$v0", "1"));
             }
             else{
-                instructionList.add(new Instruction("subi", null, "$v0", "1"));
+                instructionList.add(new Instruction("addi", null, "$v0", "1"));
             }
         }
     }
