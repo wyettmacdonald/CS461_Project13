@@ -840,22 +840,19 @@ public class CodeGenVisitor extends Visitor {
         VarExpr var = (VarExpr) node.getExpr();
         String varLoc;
         Expr ref;
-        currentSymbolTable.enterScope();
         if((ref = var.getRef()) == null){
             varLoc = (String) currentSymbolTable.lookup(var.getName());
         }
         else{
             VarExpr refExpr = (VarExpr) ref;
             if("this".equals( refExpr.getName() ) ){
-                varLoc = (String) currentSymbolTable.lookup(var.getName());
+                varLoc = (String) currentSymbolTable.lookup(var.getName(), 1);
             }
             else{ //It's "super"
-                varLoc = (String) currentSymbolTable.lookup(var.getName(), 0); //Look it up in the parent //TODO make sure this works to get the parent
+                varLoc = (String) currentSymbolTable.lookup(var.getName(), 0); //Look it up in the parent
             }
-
-            Instruction updateInstr = new Instruction("sw", null, varLoc,"$v0");
-
         }
+        instructionList.add(new Instruction("sw", null, varLoc,"$v0"));
 
 
         if(node.isPostfix()){
@@ -867,7 +864,6 @@ public class CodeGenVisitor extends Visitor {
                 instructionList.add(new Instruction("subi", null, "$v0", "1"));
             }
         }
-        currentSymbolTable.exitScope();
     }
 
     /**
