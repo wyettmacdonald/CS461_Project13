@@ -554,7 +554,8 @@ public class ToolbarController {
             pbArgs.add("java");
             pbArgs.add("-jar");
             //pbArgs.add("\\include\\Mars4_5.jar"); //NOT WORKING AGAIN
-            pbArgs.add("C:\\Users\\Tear\\Downloads\\CS361-proj13\\Proj13\\src\\proj17DouglasMacDonaldZhang\\include\\Mars4_5.jar");
+            pbArgs.add("/Users/wyettmacdonald/Documents/Spring_19/CS461/CS461_Project13/Proj13/src/proj17DouglasMacDonaldZhang/include/Mars4_5.jar");
+            pbArgs.add("/Users/wyettmacdonald/Documents/Spring_19/CS461/CS461_Project13/Proj13/src/proj17DouglasMacDonaldZhang/include/exceptions.s");
             pbArgs.add("a");
             pbArgs.add(file.getAbsolutePath());
             ProcessBuilder pb = new ProcessBuilder(pbArgs);
@@ -586,8 +587,8 @@ public class ToolbarController {
             ArrayList<String> pbArgs = new ArrayList<String>();
             pbArgs.add("java");
             pbArgs.add("-jar");
-            //pbArgs.add("\\include\\Mars4_5.jar"); //NOT WORKING AGAIN
-            pbArgs.add("C:\\Users\\Tear\\Downloads\\CS361-proj13\\Proj13\\src\\proj17DouglasMacDonaldZhang\\include\\Mars4_5.jar");
+            pbArgs.add("\\include\\Mars4_5.jar"); //NOT WORKING AGAIN
+//            pbArgs.add("C:\\Users\\Tear\\Downloads\\CS361-proj13\\Proj13\\src\\proj17DouglasMacDonaldZhang\\include\\Mars4_5.jar");
             pbArgs.add(file.getAbsolutePath());
             ProcessBuilder pb = new ProcessBuilder(pbArgs);
             console.setProcessActive(true);

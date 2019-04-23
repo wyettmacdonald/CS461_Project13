@@ -16,15 +16,11 @@ import proj17DouglasMacDonaldZhang.bantam.util.SymbolTable;
 import proj17DouglasMacDonaldZhang.bantam.visitor.Visitor;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 
 public class CodeGenVisitor extends Visitor {
 
-    private ClassTreeNode currentClass; //TODO remove unused fields
+    private String currentClass; //TODO remove unused fields
     private ErrorHandler errorHandler;
     private SymbolTable currentSymbolTable; //Symbol table of variable Locations
     private List<Instruction> instructionList;
@@ -37,32 +33,35 @@ public class CodeGenVisitor extends Visitor {
     private Stack<String> unusedTRegs;
     private Stack<String> usedARegs;
     private Stack<String> unusedARegs;
+    private Integer nextOffset;
+    private Map<String, List<String>> classListMap;
 
 
     public CodeGenVisitor(ErrorHandler errorHandler, Hashtable<String, ClassTreeNode> classMap,
-                          MipsSupport mipsSupport, Map<String, Integer> numLocalVarsVisitor ) {
+                          MipsSupport mipsSupport, Hashtable<String, Integer> idTable,
+                          Map<String, Integer> varMap, Map<String, List<String>> classListMap) {
         this.errorHandler = errorHandler;
 
 //        this.instructionList = instructions;
         this.mipsSupport = mipsSupport;
-        currentSymbolTable = new SymbolTable();
         this.idTable = idTable;
         this.classMap = classMap;
         this.currentSymbolTable = new SymbolTable();
+        this.varMap = varMap;
         this.labelStack = new Stack<>();
-        this.varMap = numLocalVarsVisitor;
         unusedTRegs = new Stack<>();
         usedTRegs = new Stack<>();
         unusedARegs = new Stack<>();
         usedARegs = new Stack<>();
+        this.classListMap = classListMap;
     }
 
     public void createStacks() {
-        for(int i = 0; i < 4; i++) {
+        for(int i = 3; i >=  0; i--) {
             unusedARegs.push("a" + i);
         }
-        for(int i = 0; i < 10; i++) {
-            unusedARegs.push("t" + i);
+        for(int i = 9; i >= 0; i--) {
+            unusedTRegs.push("t" + i);
         }
     }
 
@@ -77,9 +76,14 @@ public class CodeGenVisitor extends Visitor {
         });
     }
 
-    public Object startVisit(ClassTreeNode currentClass) {
-        currentClass.getASTNode().accept(this);
-        return null;
+    /**
+     * Generates the next offset
+     *
+     * @return next offset number
+     */
+    public int getNextOffset() {
+        nextOffset -= 4;
+        return nextOffset;
     }
     /**
      * Visit a class node
@@ -92,6 +96,11 @@ public class CodeGenVisitor extends Visitor {
 //        currentClass = currentClass.lookupClass(node.getName());
 //        currentSymbolTable = currentClass.getVarSymbolTable();
 //        currentClassFieldLevel = currentSymbolTable.getCurrScopeLevel();
+        currentClass = node.getName();
+        ArrayList<String> classNameList = new ArrayList<>();
+        classNameList.add(node.getName() + "_init");
+        instructionList.add(new Instruction("", classNameList, ""));
+        currentSymbolTable.enterScope();
         node.getMemberList().accept(this);
         return null;
     }
@@ -103,6 +112,18 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(Field node) {
+//        String reg = getTReg();
+        Instruction instruction;
+        Integer offset = currentSymbolTable.getCurrScopeLevel()*(-4);
+        if(node.getInit() != null) {
+            node.getInit().accept(this);
+            instruction = new Instruction("sw", null,  "$v0", Integer.toString(offset), "$a0");
+        }
+        instruction = new Instruction("sw", null, "$a0", Integer.toString(offset));
+        instructionList.add(instruction);
+//        pushToStack(reg);
+        Location loc = new Location("$a0", offset);
+        currentSymbolTable.add(node.getName(), loc);
         return null;
     }
 
@@ -117,25 +138,54 @@ public class CodeGenVisitor extends Visitor {
         // generate code for method body
         // generate epilogue code
         // mips return statement
-        generatePrologue();
+        // check if the reference is null
+        // if not put the reference type in $a0
+        // push the parameters on the stack
+        // la $t0 Object_dispatch_table
+        // add $t0, $t0, 4
+        // create a map with a classname and list of methods, then the index of list is the order of method
+        // need to
+        nextOffset = 0;
+        pushRegsOnStack();
+        // TODO: What does compute the obj ref and temporarily push it on the stack mean?
         pushReturnAddrAndFP();
+
         // compute the reference and push on the stack
+        // TODO: Do we need this to allocate space on the stack?
+        currentSymbolTable.enterScope();
         node.getFormalList().accept(this);
-//        int numLocalVars = varMap.get(currentClass.getName() + "." + node.getName());
-//        String space = Integer.toString(numLocalVars*4);
-//        instructionList.add(new Instruction("addi", null, "$sp", "sp", space));
+        System.out.println(currentClass + "." + node.getName());
+        int numLocalVars = varMap.get(currentClass + "." + node.getName());
+        String space = Integer.toString(numLocalVars*4);
+        instructionList.add(new Instruction("addi", null, "$sp", "sp", space));
         // initialize sp and fp
         node.getStmtList().accept(this);
+        currentSymbolTable.exitScope();
+
+        generateEpilogue();
 
         return null;
     }
 
-    public void generatePrologue() {
+    public void generatePrologue(){
+
+    }
+
+    public void pushRegsOnStack() {
         for (String reg: usedARegs) {
             pushToStack(reg);
         }
         for (String reg: usedTRegs) {
             pushToStack(reg);
+        }
+    }
+
+    public void generateEpilogue() {
+        for (String reg: usedARegs) {
+            popFromStack(reg);
+        }
+        for (String reg: usedTRegs) {
+            popFromStack(reg);
         }
     }
 
@@ -170,9 +220,16 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(Formal node) {
-        String reg = getAReg();
-        instructionList.add(new Instruction("li", null, reg, node.getName()));
-        pushToStack(reg);
+//        String reg = getAReg();
+//        instructionList.add(new Instruction("li", null, reg, node.getName()));
+//        pushToStack(reg);
+        // add to symbol table
+        // variable name and location (fp)
+        // number of parameters * 4 + 4
+//        Location loc =
+        Location loc = new Location("$fp", getNextOffset());
+        currentSymbolTable.add(node.getName(), loc);
+
         return null;
     }
 
@@ -183,10 +240,21 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(DeclStmt node) {
-        Expr initExpr = node.getInit();
-        initExpr.accept(this);
+//        Expr initExpr = node.getInit();
+//        initExpr.accept(this);
         // declaring variable, won't appear any earlier
-
+        // write code for evaluating expression
+        // puts result in $v0
+        // add variable to symbol table
+        // generate code to put expr in that location
+        // sw $v0 -4(fp)
+        // need a field to keep track of the offset
+        node.getInit().accept(this);
+        String reg = getTReg();
+        Location loc = new Location(reg, getNextOffset());
+        currentSymbolTable.add(node.getName(), loc);
+        String offset = Integer.toString(nextOffset);
+        instructionList.add(new Instruction("sw", null, "$v0", offset + "($fp)"));
         return null;
     }
 
@@ -258,6 +326,7 @@ public class CodeGenVisitor extends Visitor {
 
         Instruction instruction = new Instruction("", labels, "");
         instructionList.add(instruction);
+        currentSymbolTable.enterScope();
         node.getPredExpr().accept(this); // stores result in $v0
 
         Instruction theInstruction = new Instruction("ble", null, "$v0", "$zero", afterLabel);
@@ -273,6 +342,7 @@ public class CodeGenVisitor extends Visitor {
         if(labelStack.peek().equals(afterLabel)) {
             labelStack.pop();
         }
+        currentSymbolTable.exitScope();
 
         return null;
     }
@@ -290,6 +360,7 @@ public class CodeGenVisitor extends Visitor {
         labelStack.push(afterLabel);
         // push afterlabel on the stack
 
+        currentSymbolTable.enterScope();
         node.getInitExpr().accept(this);
 
         ArrayList<String> labels = new ArrayList<>();
@@ -315,6 +386,7 @@ public class CodeGenVisitor extends Visitor {
         labels.add(afterLabel);
         instructionList.add(new Instruction("", labels, "'"));
 
+        currentSymbolTable.exitScope();
         return null;
     }
 
@@ -334,6 +406,7 @@ public class CodeGenVisitor extends Visitor {
         return null;
     }
 
+    // TODO delete function - does not generate any mips code
     /**
      * Visit a block statement node
      *
@@ -351,7 +424,9 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(ReturnStmt node) {
-        instructionList.add(new Instruction("j", null, "$ra"));
+        if(node.getExpr() != null) {
+            node.getExpr().accept(this);
+        }
         return null;
     }
 
@@ -372,9 +447,32 @@ public class CodeGenVisitor extends Visitor {
         // get address of desired method as offset from start of vft
         // and put it in $t0, for example
         // call jalr $t0
+        // check if E1 is null, if so error
 
         node.getRefExpr().accept(this);
-        // check if E1 is null, if so error
+
+
+        //loading in type and putting result in a0
+//        instructionList.add(new Instruction(node.getRefExpr().getExprType(), null, "$v0"));
+//        instructionList.add(new Instruction("li", null, "$a0"));
+        // put result of $v0 in $a0
+        instructionList.add(new Instruction("move", null, "$a0", "$v0"));
+        //check if type is null
+        instructionList.add(new Instruction("beq", null, null, "$a0", "null_pointer_error"));
+        node.getActualList().accept(this);
+        Object loc = currentSymbolTable.lookup(node.getMethodName());
+        // this should return location and get the offset
+
+        node.getActualList().accept(this);
+        //need to fix
+        pushToStack(node.getActualList().toString());
+        // getFormalTypesList(node.getActualList().toString());
+
+        //save t and v register
+        instructionList.add(new Instruction("sw", null, "$v0", "4($fp"));
+        instructionList.add(new Instruction("sw", null, "$t0", "4($fp"));
+
+        //NEED TO DO: find address of vft with a0
 
         return null;
     }
@@ -484,18 +582,6 @@ public class CodeGenVisitor extends Visitor {
 
     }
 
-
-
-    /**
-     * Visit a new array expression node
-     *
-     * @param node the new array expression node
-     * @return null
-     */
-    public Object visit(NewArrayExpr node) {
-        return null;
-    }
-
     /**
      * Visit an instanceof expression node
      *
@@ -537,8 +623,26 @@ public class CodeGenVisitor extends Visitor {
     public Object visit(CastExpr node) {
 
         Expr expr = node.getExpr();
+
         Integer lineNum = node.getLineNum();
-        ClassCastException castException = new ClassCastException();
+
+        InstanceofExpr instanceofExpr = new InstanceofExpr(lineNum, expr, null);
+        Integer instruction = instructionList.indexOf(instanceofExpr.getExpr());
+
+//        instructionArrayList.add(new Instruction("lw", null, "$v0", "$v0"));
+//        String typeName = node.getType();
+//        int typeID = idTable.get(typeName);
+//        instructionArrayList.add(new Instruction("li", null, "$v1", Integer.toString(typeID) ));
+//        int numDescendants = classMap.get(typeName).getNumDescendants();
+//        instructionArrayList.add(new Instruction("li", null, "$t0", Integer.toString(numDescendants) ));
+//        instructionArrayList.add(new Instruction("add", null, "$t0", "$v1", "$t0"));
+
+        if (!node.getUpCast() && instructionList.get(instruction).equals(false)) {
+            instructionList.add(new Instruction("li", null , "$v0", "class_cast_exception"));
+
+
+            // instanceofExpr.setUpCheck(getFormalTypesList());
+        }
         return null;
     }
 
@@ -552,18 +656,27 @@ public class CodeGenVisitor extends Visitor {
         String varType = null;
         String varName = node.getName();
         String refName = node.getRefName();
-
+        Location varLoc = null;
         // typecheck the expr and check compatability
         node.getExpr().accept(this);
 
-        // look up location of variable (say $fp and offset 4)
-        // generates sw $v0 4($fp)
-        Instruction saveInstruction = new Instruction("sw", null, "$v0", "4($fp");
-        instructionList.add(saveInstruction);
+        if(refName != null) {
 
-        // y.x = 3 + 5
-        // Look up type field of reference expression y
-        // Look up offset of x in that class
+            if (refName.equals("super")) {
+                varLoc = (Location) classMap.get(currentClass).getParent().getVarSymbolTable().lookup(varName, 0);
+//                varLoc = (Location) currentSymbolTable.lookup(varName, 0);
+            }
+            else if (refName.equals("this")) {
+                varLoc = (Location) currentSymbolTable.lookup(varName, 1);
+
+            }
+        }
+        else {
+            varLoc = (Location) currentSymbolTable.lookup(varName);
+        }
+        System.out.println("Assignment: " + refName + " " + varName);
+        String loc = Integer.toString(varLoc.getOffset());
+        instructionList.add(new Instruction("move", null, loc, "$v0"));
         return null;
     }
 
@@ -574,6 +687,7 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(VarExpr node) {
+
         return null;
     }
 
@@ -838,30 +952,31 @@ public class CodeGenVisitor extends Visitor {
 
         //Updating the variable's value - casting with Dale's permission
         VarExpr var = (VarExpr) node.getExpr();
-        String varLoc;
+        Location varLoc;
         Expr ref;
         if((ref = var.getRef()) == null){
-            varLoc = (String) currentSymbolTable.lookup(var.getName());
+            varLoc = (Location) currentSymbolTable.lookup(var.getName());
         }
         else{
             VarExpr refExpr = (VarExpr) ref;
             if("this".equals( refExpr.getName() ) ){
-                varLoc = (String) currentSymbolTable.lookup(var.getName(), 1);
+                varLoc = (Location) currentSymbolTable.lookup(var.getName(), 1);
             }
             else{ //It's "super"
-                varLoc = (String) currentSymbolTable.lookup(var.getName(), 0); //Look it up in the parent
+                varLoc = (Location) currentSymbolTable.lookup(var.getName(), 0); //Look it up in the parent
             }
         }
 
         //Get the variable val into $v0, perform the incr/decr, then write the new val into memory
-        instructionList.add(new Instruction("lw", null, "$v0", varLoc));
+//        varLoc = Integer.toString(varLoc);
+        instructionList.add(new Instruction("lw", null, "$v0", varLoc.getBaseReg()));
         if("addi".equals(instrType)) {
             instructionList.add(new Instruction("addi", null, "$v0", "1"));
         }
         else{
             instructionList.add(new Instruction("subi", null, "$v0", "1"));
         }
-        instructionList.add(new Instruction("sw", null, varLoc,"$v0"));
+        instructionList.add(new Instruction("sw", null, varLoc.getBaseReg(),"$v0"));
 
 
         if(node.isPostfix()){
@@ -941,7 +1056,6 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(ConstBooleanExpr node) {
-        node.setExprType("boolean");
         return null;
     }
 
@@ -952,7 +1066,7 @@ public class CodeGenVisitor extends Visitor {
      * @return null
      */
     public Object visit(ConstStringExpr node) {
-        node.setExprType("String");
+        instructionList.add(new Instruction("lw", null, "$v0", node.getConstant()));
         return null;
     }
 

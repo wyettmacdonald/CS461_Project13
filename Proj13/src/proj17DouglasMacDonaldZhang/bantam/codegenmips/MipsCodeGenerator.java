@@ -100,6 +100,8 @@ public class MipsCodeGenerator
 
     private Map<String, Integer> varMap;
 
+    private Map<String, List<String>> classListMap;
+
     /**
      * MipsCodeGenerator constructor
      *
@@ -213,6 +215,7 @@ public class MipsCodeGenerator
         out.println();
 
         Hashtable<String, Integer> idTable = new Hashtable<>();
+        classListMap = new HashMap<>();
 
         //Generate the class templates
         for(int i = 0; i < classList.size(); i ++){
@@ -241,9 +244,9 @@ public class MipsCodeGenerator
         this.assemblySupport.genTextStart(theMainMethod);
         out.println();
 
-        for(int i = 0; i < classList.size(); i ++) {
-            out.println(classList.get(i).getName()+"_init:");
-        }
+//        for(int i = 0; i < classList.size(); i ++) {
+//            out.println(classList.get(i).getName()+"_init:");
+//        }
 
         // Get user defined methods in the from <class_name>.<method_name>
 
@@ -255,8 +258,10 @@ public class MipsCodeGenerator
         out.println("\tjr $ra");
         out.println();
 
-
-        CodeGenVisitor codeGenVisitor = new CodeGenVisitor(errorHandler, root.getClassMap(), assemblySupport, idTable);
+        this.varMap = new NumLocalVarsVisitor().getNumLocalVars(ast);
+        System.out.println(varMap.toString());
+        CodeGenVisitor codeGenVisitor = new CodeGenVisitor(errorHandler, root.getClassMap(), assemblySupport, idTable,
+                varMap, classListMap);
         ArrayList<Instruction> instrList = new ArrayList<Instruction>();
         codeGenVisitor.generateCode(instrList);
         instrList.forEach(instruction-> {
@@ -320,6 +325,7 @@ public class MipsCodeGenerator
         assemblySupport.genLabel(classTreeNode.getName()+ "_dispatch_table");
         MethodCollectorVisitor methodCollectorVisitor = new MethodCollectorVisitor();
         LinkedHashMap<String, String> methodsList = methodCollectorVisitor.getMethods(classTreeNode);
+        ArrayList<String> theList = new ArrayList<>();
         methodsList.forEach((method, className) -> {
             if(!classTreeNode.getClassMap().get(className).isBuiltIn() &&
                     !classMethodList.contains(className + "." + method + ":")) {
@@ -329,8 +335,10 @@ public class MipsCodeGenerator
                     theMainMethod = className + "." + method;
                 }
             }
+            theList.add(method);
             assemblySupport.genWord(className + "." + method);
         });
+        classListMap.put(classTreeNode.getName(), theList);
 
         //This method can't be generalized that much - it can't be generalized to a HashMap because HashMaps don't
         //have a set order, which is absolutely mandatory for this method to work. I think it's safest just to tie
