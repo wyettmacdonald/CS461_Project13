@@ -96,11 +96,20 @@ public class MipsCodeGenerator
      */
     private String theMainMethod;
 
-    private ArrayList<Instruction> instructionList;
-
+    /**
+     * Map of number of variables
+     */
     private Map<String, Integer> varMap;
 
+    /**
+     * Map with String as class name and list of fields
+     */
     private Map<String, List<String>> classListMap;
+
+    /**
+     * Map with String as class name and list of methods
+     */
+    private Map<String, List<String>> classMethodMap;
 
     /**
      * MipsCodeGenerator constructor
@@ -176,14 +185,16 @@ public class MipsCodeGenerator
 
 
         //Count all the fields for each classes
+        classListMap = new HashMap<>();
         FieldCounterVisitor fieldCounter = new FieldCounterVisitor();
         Map<String, Integer> fieldMap = new HashMap<String, Integer>();
         for(int i = 0; i < classList.size(); i ++){
             ClassTreeNode classTreeNode = classList.get(i);
             stringMap.put(classList.get(i).getName(), "ClassName_" + i);
-            int numFields = fieldCounter.getNumFields(classTreeNode);
+            int numFields = fieldCounter.getNumFields(classTreeNode, classListMap);
             fieldMap.put(classTreeNode.getName(), numFields);
         }
+        classListMap = fieldCounter.getClassListMap();
 
 
         //Add the filename string to the String map
@@ -215,12 +226,11 @@ public class MipsCodeGenerator
         out.println();
 
         Hashtable<String, Integer> idTable = new Hashtable<>();
-        classListMap = new HashMap<>();
+        classMethodMap = new HashMap<>();
 
         //Generate the class templates
         for(int i = 0; i < classList.size(); i ++){
             ClassTreeNode classTreeNode = classList.get(i); //Got a null pointer here once for some reason
-            //System.out.println(classTreeNode + " Name " + classTreeNode.getName() + " Map " + fieldMap);
             //Retrieving fields count here so that generateClassTemplate can be used independently
             // from fieldMap and FieldCounterVisitor
             int numFields = fieldMap.get(classTreeNode.getName());
@@ -232,6 +242,7 @@ public class MipsCodeGenerator
             idTable.put(classTreeNode.getName(), i);
             out.println();
         }
+
 
         out.println();
         //Generate the globl declarations for the dispatch tables
@@ -259,9 +270,8 @@ public class MipsCodeGenerator
         out.println();
 
         this.varMap = new NumLocalVarsVisitor().getNumLocalVars(ast);
-        System.out.println(varMap.toString());
         CodeGenVisitor codeGenVisitor = new CodeGenVisitor(errorHandler, root.getClassMap(), assemblySupport, idTable,
-                varMap, classListMap);
+                varMap, classListMap, classMethodMap, stringMap);
         ArrayList<Instruction> instrList = new ArrayList<Instruction>();
         codeGenVisitor.generateCode(instrList);
         instrList.forEach(instruction-> {
@@ -336,9 +346,11 @@ public class MipsCodeGenerator
                 }
             }
             theList.add(method);
+//            theList.add(method);
             assemblySupport.genWord(className + "." + method);
         });
-        classListMap.put(classTreeNode.getName(), theList);
+        classMethodMap.put(classTreeNode.getName(), theList);
+//        classListMap.put(classTreeNode.getName(), theList);
 
         //This method can't be generalized that much - it can't be generalized to a HashMap because HashMaps don't
         //have a set order, which is absolutely mandatory for this method to work. I think it's safest just to tie

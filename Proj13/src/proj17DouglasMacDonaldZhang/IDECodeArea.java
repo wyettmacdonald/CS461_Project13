@@ -198,7 +198,7 @@ public class IDECodeArea extends CodeArea {
         private static final String[] REGISTERS = new String[] {
                 "a0", "a1", "0", "zero", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
                 "t8", "t9", "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "a2", "a3",
-                "v0", "v1"
+                "v0", "v1", "fp", "sp", "ra"
         };
 
         // the regex rules for the ide

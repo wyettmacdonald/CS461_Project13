@@ -12,7 +12,7 @@ import proj17DouglasMacDonaldZhang.bantam.ast.*;
 import proj17DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
 import proj17DouglasMacDonaldZhang.bantam.visitor.Visitor;
 
-import java.util.Stack;
+import java.util.*;
 
 /**
 * Class which counts the number of fields in a class
@@ -21,14 +21,16 @@ import java.util.Stack;
 
 public class FieldCounterVisitor extends Visitor {
     private int numFields = 0; //Number of fields in current class
-
-
+    private Map<String, List<String>> classListMap;
+    private ArrayList<String> theFieldList;
     /**
      * searches a Class_ node for the number of local fields in a class
      * @param classTreeNode ClassTreeNode whose Class_ node is to be searched
      */
-    public int getNumFields(ClassTreeNode classTreeNode){
+    public int getNumFields(ClassTreeNode classTreeNode, Map<String, List<String>> classListMap){
         numFields = 0;
+        theFieldList = new ArrayList<>();
+        this.classListMap = classListMap;
         if(classTreeNode.getName().equals("Object")) {
             return numFields; //Object has no fields;
         }
@@ -49,7 +51,12 @@ public class FieldCounterVisitor extends Visitor {
                 classNode.accept(this);
             }
         }
+        classListMap.put(classTreeNode.getName(), theFieldList);
         return numFields;
+    }
+
+    public Map<String, List<String>> getClassListMap() {
+        return this.classListMap;
     }
 
 
@@ -68,6 +75,7 @@ public class FieldCounterVisitor extends Visitor {
      * @param node the field node
      */
     public Object visit(Field node){
+        theFieldList.add(node.getName());
         numFields++;
         return null;
     }
