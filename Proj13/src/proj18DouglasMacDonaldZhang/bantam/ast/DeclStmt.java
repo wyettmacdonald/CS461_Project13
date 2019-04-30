@@ -61,8 +61,9 @@ public class DeclStmt extends Stmt {
      * @param name    the symbol representing the name of the variable being declared
      * @param init    the (non-optional) initialization expression for the declared variable
      */
-    public DeclStmt(int lineNum, String name, Expr init) {
-        super(lineNum);
+    public DeclStmt(int lineNum, String name, Expr init,
+                    String comments, boolean hasParens) {
+        super(lineNum, comments, hasParens);
         this.type = null;
         this.name = name;
         this.init = init;

@@ -49,8 +49,9 @@ public class ReturnStmt extends Stmt {
      * @param lineNum source line number corresponding to this AST node
      * @param expr    expression to be returned (null for no return expression)
      */
-    public ReturnStmt(int lineNum, Expr expr) {
-        super(lineNum);
+    public ReturnStmt(int lineNum, Expr expr,
+                      String comments, boolean hasParens) {
+        super(lineNum, comments, hasParens);
         this.expr = expr;
     }
 

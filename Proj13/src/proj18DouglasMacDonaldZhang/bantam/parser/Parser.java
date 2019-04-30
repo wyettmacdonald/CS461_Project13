@@ -50,6 +50,7 @@ public class Parser
     private Scanner scanner;
     private Token currentToken;
     private ErrorHandler errorHandler;
+    private String comments = "";
 
 
     // constructor
@@ -73,13 +74,12 @@ public class Parser
     }
 
     // unconditionally fetch the next token //TODO finish and rework this once I'm sure I haven't broken it
+    //Tia notes: what I'm doing is that I'm assuming anywhere where advance() is called, there could be a comment there instead
+    //So you need to call advance until you get something of the right type
     private void advance() {
-        do {
-            currentToken = scanner.scan();
-            if(currentToken.kind == COMMENT){
-                new Comment(currentToken.position, currentToken.spelling);
-            }
-        } while (currentToken.kind == COMMENT);
+        while((currentToken = scanner.scan()).kind == Token.Kind.COMMENT){
+            comments += currentToken.spelling;
+        }
     }
 
 
@@ -107,7 +107,6 @@ public class Parser
         //set up scanner
         scanner = new Scanner(filename, errorHandler);
 
-        // start scanning and parsing
         advance();
         return parseProgram();
     }

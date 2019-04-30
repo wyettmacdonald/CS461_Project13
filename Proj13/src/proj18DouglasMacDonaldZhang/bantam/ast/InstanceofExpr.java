@@ -61,8 +61,9 @@ public class InstanceofExpr extends Expr {
      * @param expr    the lefthand expression
      * @param type    the righthand type
      */
-    public InstanceofExpr(int lineNum, Expr expr, String type) {
-        super(lineNum);
+    public InstanceofExpr(int lineNum, Expr expr, String type,
+                          String comments, boolean hasParens) {
+        super(lineNum, comments, hasParens);
         this.expr = expr;
         this.type = type;
     }

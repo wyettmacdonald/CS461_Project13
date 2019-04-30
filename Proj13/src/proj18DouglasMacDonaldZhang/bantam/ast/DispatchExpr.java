@@ -62,8 +62,9 @@ public class DispatchExpr extends Expr {
      * @param actualList list of actual parameter expressions
      */
     public DispatchExpr(int lineNum, Expr refExpr,
-                        String methodName, ExprList actualList) {
-        super(lineNum);
+                        String methodName, ExprList actualList,
+                        String comments, boolean hasParens) {
+        super(lineNum, comments, hasParens);
         this.refExpr = refExpr;
         this.methodName = methodName;
         this.actualList = actualList;

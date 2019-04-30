@@ -63,8 +63,9 @@ public class ArrayExpr extends Expr {
      * @param name    the name of the variable
      * @param index   the index expression
      */
-    public ArrayExpr(int lineNum, Expr ref, String name, Expr index) {
-        super(lineNum);
+    public ArrayExpr(int lineNum, Expr ref, String name, Expr index,
+                     String comments, boolean hasParens) {
+        super(lineNum, comments, hasParens);
         this.ref = ref;
         this.name = name;
         this.index = index;

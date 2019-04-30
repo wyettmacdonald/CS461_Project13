@@ -49,8 +49,9 @@ public class NewExpr extends Expr {
      * @param lineNum source line number corresponding to this AST node
      * @param type    the type to be constructed
      */
-    public NewExpr(int lineNum, String type) {
-        super(lineNum);
+    public NewExpr(int lineNum, String type,
+                   String comments, boolean hasParens) {
+        super(lineNum, comments, hasParens);
         this.type = type;
     }
 

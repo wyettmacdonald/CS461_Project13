@@ -51,8 +51,9 @@ public class UnaryDecrExpr extends UnaryExpr {
      * @param expr      expression for decrementing (expression must be either VarExpr or ArrayExpr)
      * @param isPostfix boolean indicating whether operator is postfix (true) or prefix (false)
      */
-    public UnaryDecrExpr(int lineNum, Expr expr, boolean isPostfix) {
-        super(lineNum, expr);
+    public UnaryDecrExpr(int lineNum, Expr expr, boolean isPostfix,
+                         String comments, boolean hasParens) {
+        super(lineNum, expr, comments, hasParens);
         this.isPostfix = isPostfix;
     }
 

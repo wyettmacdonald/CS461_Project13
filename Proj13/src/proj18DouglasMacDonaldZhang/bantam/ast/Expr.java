@@ -62,8 +62,8 @@ public abstract class Expr extends ASTNode {
      *
      * @param lineNum source line number corresponding to this AST node
      */
-    public Expr(int lineNum) {
-        super(lineNum);
+    public Expr(int lineNum, String comments, boolean hasParens) {
+        super(lineNum, comments, hasParens);
     }
 
     /**

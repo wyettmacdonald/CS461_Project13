@@ -51,8 +51,8 @@ public class ConstIntExpr extends ConstExpr {
      * @param lineNum  source line number corresponding to this AST node
      * @param constant constant value (as a String)
      */
-    public ConstIntExpr(int lineNum, String constant) {
-        super(lineNum, constant);
+    public ConstIntExpr(int lineNum, String constant, String comments, boolean hasParens) {
+        super(lineNum, constant, comments, hasParens);
         intConstant = Integer.parseInt(constant);
     }
 

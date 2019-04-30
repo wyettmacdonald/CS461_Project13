@@ -67,8 +67,9 @@ public class Class_ extends ASTNode {
      * @param parent     the name of the parent of this class
      * @param memberList a list of the class members
      */
-    public Class_(int lineNum, String filename, String name, String parent, MemberList memberList) {
-        super(lineNum);
+    public Class_(int lineNum, String filename, String name, String parent, MemberList memberList,
+                  String comments, boolean hasParens) {
+        super(lineNum, comments, hasParens);
         this.filename = filename;
         this.name = name;
         this.parent = parent;

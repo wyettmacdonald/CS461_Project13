@@ -52,8 +52,8 @@ public abstract class Stmt extends ASTNode {
      *
      * @param lineNum source line number corresponding to this AST node
      */
-    protected Stmt(int lineNum) {
-        super(lineNum);
+    protected Stmt(int lineNum, String comments, boolean hasParens) {
+        super(lineNum, comments, hasParens);
     }
 
     /**

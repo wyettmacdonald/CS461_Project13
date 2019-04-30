@@ -37,10 +37,13 @@ import proj18DouglasMacDonaldZhang.bantam.visitor.Visitor;
  * @see ClassList
  */
 public class Program extends ASTNode {
+
     /**
      * List of class declarations that comprise the program
      */
     protected ClassList classList;
+
+    protected String endComments; //Stores any comments that come after the end of the code in the file
 
     /**
      * Program constructor
@@ -48,9 +51,10 @@ public class Program extends ASTNode {
      * @param lineNum   source line number corresponding to this AST node
      * @param classList list of class declarations
      */
-    public Program(int lineNum, ClassList classList) {
-        super(lineNum);
+    public Program(int lineNum, ClassList classList, String comments, boolean hasParens, String eofComments) {
+        super(lineNum, comments, hasParens);
         this.classList = classList;
+        this.endComments = eofComments;
     }
 
     /**

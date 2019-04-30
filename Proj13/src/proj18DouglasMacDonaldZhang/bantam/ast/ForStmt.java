@@ -70,8 +70,9 @@ public class ForStmt extends Stmt {
      * @param bodyStmt   the then statement
      */
     public ForStmt(int lineNum, Expr initExpr, Expr predExpr,
-                   Expr updateExpr, Stmt bodyStmt) {
-        super(lineNum);
+                   Expr updateExpr, Stmt bodyStmt,
+                   String comments, boolean hasParens) {
+        super(lineNum, comments, hasParens);
         this.initExpr = initExpr;
         this.predExpr = predExpr;
         this.updateExpr = updateExpr;

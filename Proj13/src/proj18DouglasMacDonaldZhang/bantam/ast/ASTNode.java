@@ -257,13 +257,19 @@ public abstract class ASTNode {
      */
     protected int lineNum;
 
+    protected String comments; //Stores any comments proceeding the AST node in question
+
+    protected boolean parentheses; //Stores whether this is surrounded by parentheses
+
     /**
      * ASTNode constructor
      *
      * @param lineNum source line number corresponding to this AST node
      */
-    protected ASTNode(int lineNum) {
+    protected ASTNode(int lineNum, String comments, boolean hasParens) {
         this.lineNum = lineNum;
+        this.comments = comments;
+        this.parentheses = hasParens;
     }
 
     /**

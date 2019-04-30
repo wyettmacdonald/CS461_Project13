@@ -49,8 +49,9 @@ public class ExprStmt extends Stmt {
      * @param lineNum source line number corresponding to this AST node
      * @param expr    the expression within the statement
      */
-    public ExprStmt(int lineNum, Expr expr) {
-        super(lineNum);
+    public ExprStmt(int lineNum, Expr expr,
+                    String comments, boolean hasParens) {
+        super(lineNum, comments, hasParens);
         this.expr = expr;
     }
 

@@ -46,8 +46,9 @@ public class BinaryCompGtExpr extends BinaryCompExpr {
      * @param leftExpr  left operand expression
      * @param rightExpr right operand expression
      */
-    public BinaryCompGtExpr(int lineNum, Expr leftExpr, Expr rightExpr) {
-        super(lineNum, leftExpr, rightExpr);
+    public BinaryCompGtExpr(int lineNum, Expr leftExpr, Expr rightExpr, String comments, boolean hasParens) {
+        super(lineNum, leftExpr, rightExpr, comments, hasParens);
+
     }
 
     /**

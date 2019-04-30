@@ -47,8 +47,9 @@ public class BinaryLogicOrExpr extends BinaryLogicExpr {
      * @param leftExpr  lefthand expression for OR-ing
      * @param rightExpr righthand expression for OR-ing
      */
-    public BinaryLogicOrExpr(int lineNum, Expr leftExpr, Expr rightExpr) {
-        super(lineNum, leftExpr, rightExpr);
+    public BinaryLogicOrExpr(int lineNum, Expr leftExpr, Expr rightExpr, String comments, boolean hasParens) {
+        super(lineNum, leftExpr, rightExpr, comments, hasParens);
+
     }
 
     /**

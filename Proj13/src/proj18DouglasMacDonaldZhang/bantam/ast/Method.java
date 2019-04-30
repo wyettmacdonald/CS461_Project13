@@ -68,8 +68,9 @@ public class Method extends Member {
      * @param stmtList   a list of statements appearing in the method body
      */
     public Method(int lineNum, String returnType, String name,
-                  FormalList formalList, StmtList stmtList) {
-        super(lineNum);
+                  FormalList formalList, StmtList stmtList,
+                  String comments, boolean hasParens) {
+        super(lineNum, comments, hasParens);
         this.returnType = returnType;
         this.name = name;
         this.formalList = formalList;

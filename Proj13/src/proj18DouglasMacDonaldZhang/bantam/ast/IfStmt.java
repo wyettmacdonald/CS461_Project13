@@ -62,8 +62,9 @@ public class IfStmt extends Stmt {
      * @param thenStmt the then statement
      * @param elseStmt the else statement
      */
-    public IfStmt(int lineNum, Expr predExpr, Stmt thenStmt, Stmt elseStmt) {
-        super(lineNum);
+    public IfStmt(int lineNum, Expr predExpr, Stmt thenStmt, Stmt elseStmt,
+                  String comments, boolean hasParens) {
+        super(lineNum, comments, hasParens);
         this.predExpr = predExpr;
         this.thenStmt = thenStmt;
         this.elseStmt = elseStmt;

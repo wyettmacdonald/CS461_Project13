@@ -45,8 +45,8 @@ public class ConstBooleanExpr extends ConstExpr {
      * @param lineNum  source line number corresponding to this AST node
      * @param constant constant value (as a String)
      */
-    public ConstBooleanExpr(int lineNum, String constant) {
-        super(lineNum, constant);
+    public ConstBooleanExpr(int lineNum, String constant, String comments, boolean hasParens) {
+        super(lineNum, constant, comments, hasParens);
     }
 
     /**

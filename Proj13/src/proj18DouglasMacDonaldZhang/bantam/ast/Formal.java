@@ -53,8 +53,8 @@ public class Formal extends ASTNode {
      * @param type    the type of the formal parameter
      * @param name    the name of the formal parameter
      */
-    public Formal(int lineNum, String type, String name) {
-        super(lineNum);
+    public Formal(int lineNum, String type, String name, String comments, boolean hasParens) {
+        super(lineNum, comments, hasParens);
         this.type = type;
         this.name = name;
     }
