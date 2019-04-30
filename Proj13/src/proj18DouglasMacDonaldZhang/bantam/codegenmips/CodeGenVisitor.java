@@ -5,15 +5,15 @@
  * CodeGenVisitor class for MIPS
  */
 
-package proj17DouglasMacDonaldZhang.bantam.codegenmips;
+package proj18DouglasMacDonaldZhang.bantam.codegenmips;
 
-import proj17DouglasMacDonaldZhang.bantam.ast.*;
-import proj17DouglasMacDonaldZhang.bantam.semant.NumLocalVarsVisitor;
-import proj17DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
-import proj17DouglasMacDonaldZhang.bantam.util.ErrorHandler;
-import proj17DouglasMacDonaldZhang.bantam.util.Location;
-import proj17DouglasMacDonaldZhang.bantam.util.SymbolTable;
-import proj17DouglasMacDonaldZhang.bantam.visitor.Visitor;
+import proj18DouglasMacDonaldZhang.bantam.ast.*;
+import proj18DouglasMacDonaldZhang.bantam.semant.NumLocalVarsVisitor;
+import proj18DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
+import proj18DouglasMacDonaldZhang.bantam.util.ErrorHandler;
+import proj18DouglasMacDonaldZhang.bantam.util.Location;
+import proj18DouglasMacDonaldZhang.bantam.util.SymbolTable;
+import proj18DouglasMacDonaldZhang.bantam.visitor.Visitor;
 
 import java.lang.reflect.Array;
 import java.util.*;

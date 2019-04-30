@@ -72,6 +72,8 @@ public class MasterController {
     @FXML private Button assembleAndRunButton;
     @FXML private Button stopButton;
 
+    @FXML private Button prettyPrintButton;
+
     @FXML private Button findUsesButton;
     @FXML private Button findUnusedButton;
     @FXML private Button suggestNamesButton;
@@ -154,6 +156,8 @@ public class MasterController {
             this.findUsesButton.setDisable(false);
             this.findUnusedButton.setDisable(false);
             this.suggestNamesButton.setDisable(false);
+            this.prettyPrintButton.setDisable(false);
+
 
         }
         this.updateStructureView();
@@ -210,6 +214,7 @@ public class MasterController {
         this.findUnusedButton.setDisable(true);
         this.suggestNamesButton.setDisable(true);
         this.compileButton.setDisable(true);
+        this.prettyPrintButton.setDisable(true);
     }
 
 
@@ -225,6 +230,7 @@ public class MasterController {
         this.findUnusedButton.setDisable(false);
         this.suggestNamesButton.setDisable(false);
         this.compileButton.setDisable(false);
+        this.prettyPrintButton.setDisable(false);
 
         //Disabling MIPS only
         this.assembleButton.setDisable(true);
@@ -507,6 +513,7 @@ public class MasterController {
         this.assembleButton.setDisable(true);
         this.assembleAndRunButton.setDisable(true);
         this.stopButton.setDisable(true);
+        this.prettyPrintButton.setDisable(true);
         this.findUsesButton.setDisable(true);
         this.findUnusedButton.setDisable(true);
         this.suggestNamesButton.setDisable(true);
@@ -693,6 +700,27 @@ public class MasterController {
     @FXML
     public void handleStop(Event event) {
         toolbarController.handleStop();
+    }
+
+    /**
+     * Calls the method that handles Pretty Print from the ToolbarController
+     *
+     * @param event Event object
+     */
+    @FXML
+    public void handlePrettyPrint(Event event) {
+        Tab curTab = this.codeTabPane.getSelectionModel().getSelectedItem();
+        if(this.codeTabPane.getSaveStatus(curTab)) {
+            File currentFile = codeTabPane.getCurrentFile();
+            toolbarController.handlePrettyPrint(currentFile);
+        }
+        else {
+            String saveResult = askIfSave(curTab);
+            if ("unsaved".equals(saveResult) || "saved".equals(saveResult)) {
+                File currentFile = codeTabPane.getCurrentFile();
+                toolbarController.handlePrettyPrint(currentFile);
+            }
+        }
     }
 
 

@@ -1,0 +1,37 @@
+/*
+* Tia Zhang and Wyett MacDonald
+* CS461 Project 13 Test File
+* Test file for finding unused (and a bit for finding uses)
+*/
+
+class Main{
+
+    int x = 0;
+    String y = "hi";
+    boolean bool = false;
+
+    void blah(int b) {
+
+        var i = 0;
+
+        for(i; i < 5; i++) {
+        }
+
+        while(i < 10) {
+        	i++;
+        	var citron = "Doodoo";
+        	citron = "Baby Shark";
+        }
+
+        if(bool || i < 5) {
+        }
+    }
+
+	void main(){
+	}
+}
+
+class Parent {
+    String newString = "hello";
+
+}

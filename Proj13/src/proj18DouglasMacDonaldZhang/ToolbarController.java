@@ -32,6 +32,7 @@ import javafx.scene.control.Alert;
 import org.fxmisc.richtext.CodeArea;
 import proj18DouglasMacDonaldZhang.bantam.ast.Program;
 import proj18DouglasMacDonaldZhang.bantam.parser.Parser;
+import proj18DouglasMacDonaldZhang.bantam.print.PrintVisitor;
 import proj18DouglasMacDonaldZhang.bantam.semant.*;
 import proj18DouglasMacDonaldZhang.bantam.treedrawer.Drawer;
 import proj18DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
@@ -777,6 +778,16 @@ public class ToolbarController {
         } catch (Throwable e) {
             createErrorDialog("Program Stop", "Error stopping the MIPS program.");
         }
+    }
+
+    public void handlePrettyPrint(File file) {
+        ErrorHandler errorHandler = new ErrorHandler();
+        Parser parser = new Parser(errorHandler);
+        String filename = this.codeTabPane.getFileName();
+        Program ast = parser.parse(filename);
+        PrintVisitor printVisitor = new PrintVisitor(ast);
+        String prettyString = printVisitor.startVisit();
+        ToolbarController.this.codeTabPane.createTabWithContent(prettyString);
     }
 
     /**

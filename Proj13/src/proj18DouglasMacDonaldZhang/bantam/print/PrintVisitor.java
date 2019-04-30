@@ -1,21 +1,63 @@
-package proj17DouglasMacDonaldZhang.bantam.print;
+/*
+ * Wyett MacDonald, Tia Zhang, Kyle Douglas
+ * April 29, 2019
+ * CS461 Project 18
+ * PrintVisitor for printing the AST
+ */
+package proj18DouglasMacDonaldZhang.bantam.print;
 
-import proj17DouglasMacDonaldZhang.bantam.ast.*;
-import proj17DouglasMacDonaldZhang.bantam.semant.SemanticAnalyzer;
-import proj17DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
-import proj17DouglasMacDonaldZhang.bantam.util.Error;
-import proj17DouglasMacDonaldZhang.bantam.util.SymbolTable;
-import proj17DouglasMacDonaldZhang.bantam.visitor.Visitor;
+import proj18DouglasMacDonaldZhang.bantam.ast.*;
+import proj18DouglasMacDonaldZhang.bantam.semant.SemanticAnalyzer;
+import proj18DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
+import proj18DouglasMacDonaldZhang.bantam.util.Error;
+import proj18DouglasMacDonaldZhang.bantam.util.SymbolTable;
+import proj18DouglasMacDonaldZhang.bantam.visitor.Visitor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 
 public class PrintVisitor extends Visitor {
 
-    public PrintVisitor() {
+    private String printString;
+    private Program ast;
+    private Stack<String> curTab;
+    private boolean inForLoop;
+
+    public PrintVisitor(Program ast) {
+        this.ast = ast;
     }
 
+    public String startVisit() {
+        this.inForLoop = false;
+        this.printString = "";
+        this.curTab = new Stack<>();
+        this.ast.accept(this);
+        return printString;
+    }
+
+    /**
+     * Adds a tab or \t on to the stack
+     */
+    public void addTab() {
+        curTab.push("\t");
+    }
+
+    /**
+     * Gets the current tab (number of \t's)
+     *
+     * @return string of \t's
+     */
+    public String getTab() {
+        String tabs = "";
+        if(!curTab.empty()) {
+            for (String tab : curTab) {
+                tabs += tab;
+            }
+        }
+        return tabs;
+    }
 
     /**
      * Visit a class node
@@ -24,8 +66,17 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(Class_ node) {
+        String parent = node.getParent();
         // set the currentClass to this class
+        printString += getTab() + "class " + node.getName();
+        if(parent != null) {
+            printString += " extends " + parent;
+        }
+        printString += " {\n";
+        addTab();
         node.getMemberList().accept(this);
+        curTab.pop();
+        printString += getTab() + "}\n";
         return null;
     }
 
@@ -36,6 +87,15 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(Field node) {
+        String type = node.getType();
+        String name = node.getName();
+        Expr expr = node.getInit();
+        printString += getTab() + type + " " + name;
+        if (expr != null) {
+            printString += " = ";
+            expr.accept(this);
+        }
+        printString += ";\n";
         return null;
     }
 
@@ -46,8 +106,19 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(Method node) {
+        String returnType = node.getReturnType();
+        String name = node.getName();
+        FormalList list = node.getFormalList();
+        printString += getTab() + returnType + " " + name + "(";
+//        for (ASTNode formal: list) {
+//            formal.accept(this);
+//        }
         node.getFormalList().accept(this);
+        printString += ") {\n";
+        addTab();
         node.getStmtList().accept(this);
+        curTab.pop();
+        printString += getTab() + "}\n\n";
         return null;
     }
 
@@ -58,6 +129,9 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(Formal node) {
+        String type = node.getType();
+        String name = node.getName();
+        printString += type + " " + name + ",";
         return null;
     }
 
@@ -68,8 +142,15 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(DeclStmt node) {
+        String type = node.getType();
+        String name = node.getName();
+        printString += getTab() + "var " + name;
         Expr initExpr = node.getInit();
-        initExpr.accept(this);
+        if (initExpr != null) {
+            printString += " = ";
+            initExpr.accept(this);
+        }
+        printString += ";\n";
         return null;
     }
 
@@ -80,9 +161,21 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(IfStmt node) {
+        printString += getTab() + "if(";
         node.getPredExpr().accept(this);
+        printString += ") {\n";
+        addTab();
         node.getThenStmt().accept(this);
-        node.getElseStmt().accept(this);
+        curTab.pop();
+        printString += getTab() + "}\n";
+        Stmt stmt = node.getElseStmt();
+        if(stmt != null) {
+            printString += getTab() + "else {\n";
+            addTab();
+            node.getElseStmt().accept(this);
+            curTab.pop();
+            printString += getTab() + "}\n\n";
+        }
         return null;
     }
 
@@ -93,8 +186,13 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(WhileStmt node) {
+        printString += getTab() + "while(";
         node.getPredExpr().accept(this);
+        printString += ") {\n";
+        addTab();
         node.getBodyStmt().accept(this);
+        curTab.pop();
+        printString += getTab() + "}\n\n";
         return null;
     }
 
@@ -105,10 +203,19 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(ForStmt node) {
+        printString += getTab() + "for(";
+        inForLoop = true;
         node.getInitExpr().accept(this);
+        printString += "; ";
         node.getPredExpr().accept(this);
-        node.getBodyStmt().accept(this);
+        printString += "; ";
         node.getUpdateExpr().accept(this);
+        printString += ") {\n";
+        inForLoop = false;
+        addTab();
+        node.getBodyStmt().accept(this);
+        curTab.pop();
+        printString += getTab() + "}\n\n";
         return null;
     }
 
@@ -119,6 +226,8 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(BreakStmt node) {
+        printString += getTab() + "break;";
+        curTab.pop();
         return null;
     }
 
@@ -140,7 +249,12 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(ReturnStmt node) {
-        node.getExpr().accept(this);
+        Expr expr = node.getExpr();
+        printString += getTab() + "return";
+        if(expr != null) {
+            node.getExpr().accept(this);
+        }
+        printString += ";\n";
         return null;
     }
 
@@ -151,8 +265,16 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(DispatchExpr node) {
-        node.getRefExpr().accept(this);
+        String name = node.getMethodName();
+        Expr expr = node.getRefExpr();
+        printString += getTab();
+        if(expr != null) {
+            expr.accept(this);
+            printString += ".";
+        }
+        printString += name + "(";
         node.getActualList().accept(this);
+        printString += ");\n";
         return null;
     }
 
@@ -193,6 +315,8 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(NewExpr node) {
+        String type = node.getType();
+        printString += "new " + type + "()";
         return null;
     }
 
@@ -203,7 +327,9 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(InstanceofExpr node) {
+        String type = node.getType();
         node.getExpr().accept(this);
+        printString += " instanceof " + type;
         return null;
     }
 
@@ -214,7 +340,9 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(CastExpr node) {
-       node.getExpr().accept(this);
+        String type = node.getType();
+        printString += "cast(" + type + ", ";
+        node.getExpr().accept(this);
         return null;
     }
 
@@ -225,10 +353,15 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(AssignExpr node) {
-        String varType = null;
         String varName = node.getName();
         String refName = node.getRefName();
+        printString += getTab();
+        if(refName != null) {
+            printString += refName + ".";
+        }
+        printString += varName + " = ";
         node.getExpr().accept(this);
+        printString += ";\n";
         return null;
     }
 
@@ -240,21 +373,16 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(VarExpr node) {
         //check that ref.name is legit
-        String varType;
         String varName = node.getName();
-        node.getRef().accept(this);
+        Expr expr = node.getRef();
+        if(expr != null) {
+            node.getRef().accept(this);
+        }
+        printString += varName;
         return null;
     }
 
-    private int getClassFieldLevel(ClassTreeNode node) {
-        int level = 1;
-        while(node.getParent() != null) {
-            level++;
-            node = node.getParent();
-        }
-        return level;
-    }
-
+    // TODO: Implement arrays?
     /**
      * Visit a new array expression node
      *
@@ -279,12 +407,25 @@ public class PrintVisitor extends Visitor {
     }
 
     /**
+     * Helper method for generating BinaryExpr
+     *
+     * @param node BinaryExpr node
+     * @param op Operator for the node
+     */
+    public void visitBinary(BinaryExpr node, String op) {
+        node.getLeftExpr().accept(this);
+        printString += " " + op + " ";
+        node.getRightExpr().accept(this);
+    }
+
+    /**
      * Visit a binary comparison equals expression node
      *
      * @param node the binary comparison equals expression node
      * @return the type of the expression
      */
     public Object visit(BinaryCompEqExpr node) {
+        visitBinary(node, node.getOpName());
         return null;
     }
 
@@ -295,6 +436,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryCompNeExpr node) {
+        visitBinary(node, node.getOpName());
         return null;
     }
 
@@ -305,15 +447,8 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryCompLtExpr node) {
+        visitBinary(node, node.getOpName());
         return null;
-    }
-
-    private String[] getLeftAndRightTypes(BinaryExpr node) {
-        node.getLeftExpr().accept(this);
-        node.getRightExpr().accept(this);
-        String type1 = node.getLeftExpr().getExprType();
-        String type2 = node.getRightExpr().getExprType();
-        return new String[]{type1,type2};
     }
 
     /**
@@ -323,6 +458,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryCompLeqExpr node) {
+        visitBinary(node, node.getOpName());
         return null;
     }
 
@@ -333,6 +469,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryCompGtExpr node) {
+        visitBinary(node, node.getOpName());
         return null;
     }
 
@@ -343,6 +480,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryCompGeqExpr node) {
+        visitBinary(node, node.getOpName());
         return null;
     }
 
@@ -353,6 +491,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryArithPlusExpr node) {
+        visitBinary(node, node.getOpName());
         return null;
     }
 
@@ -363,6 +502,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryArithMinusExpr node) {
+        visitBinary(node, node.getOpName());
         return null;
     }
 
@@ -373,6 +513,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryArithTimesExpr node) {
+        visitBinary(node, node.getOpName());
         return null;
     }
 
@@ -383,6 +524,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryArithDivideExpr node) {
+        visitBinary(node, node.getOpName());
         return null;
     }
 
@@ -393,6 +535,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryArithModulusExpr node) {
+        visitBinary(node, node.getOpName());
         return null;
     }
 
@@ -403,6 +546,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryLogicAndExpr node) {
+        visitBinary(node, node.getOpName());
         return null;
     }
 
@@ -413,6 +557,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryLogicOrExpr node) {
+        visitBinary(node, node.getOpName());
         return null;
     }
 
@@ -423,6 +568,9 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(UnaryNegExpr node) {
+        String op = node.getOpName();
+        printString += op;
+        node.getExpr().accept(this);
         return null;
     }
 
@@ -433,6 +581,9 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(UnaryNotExpr node) {
+        String op = node.getOpName();
+        printString += op;
+        node.getExpr().accept(this);
         return null;
     }
 
@@ -443,6 +594,30 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(UnaryIncrExpr node) {
+        String name = node.getOpName();
+        if(node.isPostfix()) {
+            if(inForLoop) {
+                node.getExpr().accept(this);
+                printString += name;
+            }
+            else {
+                printString += getTab();
+                node.getExpr().accept(this);
+                printString += name + ";\n";
+            }
+        }
+        else {
+            if(inForLoop) {
+                printString += name;
+                node.getExpr().accept(this);
+            }
+            else {
+                printString += getTab();
+                printString += name;
+                node.getExpr().accept(this);
+                printString += ";\n";
+            }
+        }
         return null;
     }
 
@@ -453,6 +628,30 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(UnaryDecrExpr node) {
+        String name = node.getOpName();
+        if(node.isPostfix()) {
+            if(inForLoop) {
+                node.getExpr().accept(this);
+                printString += name;
+            }
+            else {
+                printString += getTab();
+                node.getExpr().accept(this);
+                printString += name + ";\n";
+            }
+        }
+        else {
+            if(inForLoop) {
+                printString += name;
+                node.getExpr().accept(this);
+            }
+            else {
+                printString += getTab();
+                printString += name;
+                node.getExpr().accept(this);
+                printString += ";\n";
+            }
+        }
         return null;
     }
 
@@ -463,6 +662,8 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(ConstIntExpr node) {
+        String num = node.getConstant();
+        printString += num;
         return null;
     }
 
@@ -473,6 +674,8 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(ConstBooleanExpr node) {
+        String constBool = node.getConstant();
+        printString += constBool;
         return null;
     }
 
@@ -483,6 +686,8 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(ConstStringExpr node) {
+        String constString = node.getConstant();
+        printString += "\"" + constString + "\"";
         return null;
     }
 

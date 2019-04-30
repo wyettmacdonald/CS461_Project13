@@ -15,7 +15,7 @@ class Main extends Parent{
 			i = 5;
 			meh = "something";
 			var citron = "Mah";
-			//citron = "I was used!";
+			citron = "I was used!";
 		}
 		while(i < 10) {
 			i++;
@@ -25,11 +25,11 @@ class Main extends Parent{
 		}
 
 		
-		// super.god(); //This works!
-		// super.parentStr = "Me"; //This works too!
+		super.god(); //This works!
+		super.parentStr = "Me"; //This works too!
 
 		var test = new Test();
-		// test.testMethod();
+		test.testMethod();
 		
 	
 
@@ -37,7 +37,7 @@ class Main extends Parent{
 	
 
 	void g(){
-		// blah();
+		blah();
 		var i = 0;
 		while(i < 10) {
 			i++;

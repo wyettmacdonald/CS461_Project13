@@ -106,6 +106,7 @@
         <Button fx:id ="assembleAndRunButton" onAction = "#handleAssembleAndRun" text = "Assemble and Run"/>
         <Button fx:id ="stopButton" onAction = "#handleStop" text = "Stop"/>
 
+        <Button fx:id ="prettyPrintButton" onAction="#handlePrettyPrint" text="Pretty Print"/>
 
         <Button text="Find Uses" fx:id="findUsesButton" onAction="#handleFindUsesButtonAction" />
         <Button text="Find Unused" fx:id="findUnusedButton" onAction="#handleFindUnusedButtonAction" />
