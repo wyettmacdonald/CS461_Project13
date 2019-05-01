@@ -621,7 +621,7 @@ public class CodeGenVisitor extends Visitor {
         String type = node.getType();
         Integer lineNum = node.getLineNum();
 
-        InstanceofExpr instanceofExpr = new InstanceofExpr(lineNum, expr, type);
+        InstanceofExpr instanceofExpr = new InstanceofExpr(lineNum, expr, type, "", false);
 
         if (!node.getUpCast()){
             instanceofExpr.accept(this);
