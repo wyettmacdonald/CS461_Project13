@@ -113,6 +113,27 @@ public class Class_ extends ASTNode {
     }
 
     /**
+     * Get the comments associated with the node
+     *
+     * @return string of comments
+     */
+    public String getComments() {
+        return comments;
+    }
+
+    /**
+     * toString method to return the node as a string
+     *
+     * @return a string in bantam java form
+     */
+    public String toString() {
+        if(parent != null) {
+            return "class " + name +  " extends " + parent + " {\n";
+        }
+        return "class " + name + " {\n";
+    }
+
+    /**
      * Visitor method
      *
      * @param v bantam.visitor object

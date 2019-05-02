@@ -78,6 +78,24 @@ public class Formal extends ASTNode {
     }
 
     /**
+     * Get the comments associated with this node
+     *
+     * @return string of comments
+     */
+    public String getComments() {
+        return comments;
+    }
+
+    /**
+     * toString method to write the node as a string
+     *
+     * @return a string of bantam java code
+     */
+    public String toString() {
+        return type + " " + name;
+    }
+
+    /**
      * Visitor method
      *
      * @param v bantam.visitor object

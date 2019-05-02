@@ -4,12 +4,18 @@
 * Test file for finding unused (and a bit for finding uses)
 */
 
-class Main{
-
-    int x = 0;
-    String y = "hi";
+/**
+A class
+*/
+// a class
+class Main{ // a class
+	// a comment to come through
+    int x; // another comment
+	// comment 3
+    String y;
+	// another comment
     boolean bool = false;
-
+	// comment before method
     void blah(int b) {
 
         var i = 0;
@@ -17,13 +23,13 @@ class Main{
         for(i; i < 5; i++) {
         }
 
-        while(i < 10) {
+        while((i < 10) && (i > 20)) {
         	i++;
         	var citron = "Doodoo";
         	citron = "Baby Shark";
         }
 
-        if(bool || i < 5) {
+        if((bool) || (i < 5)) {
         }
     }
 

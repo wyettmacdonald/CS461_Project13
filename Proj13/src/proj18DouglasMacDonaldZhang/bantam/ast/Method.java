@@ -114,6 +114,27 @@ public class Method extends Member {
     }
 
     /**
+     * Get the comments associated with this node
+     *
+     * @return string of comments
+     */
+    public String getComments() {
+        if(comments != null) {
+            return comments + "\n";
+        }
+        return comments;
+    }
+
+    /**
+     * toString method to write the node as a string
+     *
+     * @return a string of bantam java code
+     */
+    public String toString() {
+        return returnType + " " + name + "(";
+    }
+
+    /**
      * Visitor method
      *
      * @param v bantam.visitor object

@@ -98,6 +98,27 @@ public class DeclStmt extends Stmt {
     }
 
     /**
+     * Get the comments associated with this node
+     *
+     * @return string of comments
+     */
+    public String getComments() {
+        return comments;
+    }
+
+    /**
+     * toString method to write the node as a string
+     *
+     * @return a string of bantam java code
+     */
+    public String toString() {
+        if(init != null) {
+            return "var" + " " + name + " = ";
+        }
+        return "var" + " " + name + ";\n";
+    }
+
+    /**
      * Visitor method
      *
      * @param v bantam.visitor object
