@@ -144,7 +144,11 @@ public class Scanner
                 }
                 takeIt();
             }
-            takeIt();
+            takeIt();  //TODO determine if this can be removed
+            //Tia addition: record all white space after a multiline
+            while (isWhite(currentChar)) {
+                takeIt();
+            }
 
         }
         return Token.Kind.COMMENT;
