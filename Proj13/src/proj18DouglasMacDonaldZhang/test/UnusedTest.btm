@@ -8,9 +8,30 @@ class Main extends Parent{
 	String meh;
 
 	void blah(){
-		var arg = 0;
-		meh = "nice one";
+		var arg = (0); //Permitted
+		//(var) arg = 0; and (var arg) = 0; don't parse
+		meh = ("nice one");
 		var i = 0;
+		var arr = (new int[10]); //Allowed
+
+		if( (meh instanceof String) ) {
+			var juju  = "meh";
+			arr = (int[1]);
+			//(return); banned
+			(i++);
+			(i/10);
+			(!true);
+			juju = (meh);
+		}
+
+		for((i); (i < 10); (i++)) { //Parens in for loop expressions allowed
+			i = 5;
+			meh = "something";
+			var citron = "Mah";
+			citron = "I was used!";
+			break;
+		}
+		
 		for(i; i < 10; i++) {
 			i = 5;
 			meh = "something";
@@ -25,7 +46,9 @@ class Main extends Parent{
 		}
 
 		
-		super.god(); //This works!
+		(super.god()) ; //Legal
+		(super).god() ; //Legal
+		//Parens around the second half the expression aren't legal
 		super.parentStr = "Me"; //This works too!
 
 		var test = new Test();

@@ -74,7 +74,12 @@ public class Parser
     }
 
     // unconditionally fetch the next token
-    //Tia notes: I've currently marked parentheses as impossible for everything until I figure out exactly how the parser would process then
+    //Tia notes: I've currently marked parentheses as impossible for everything
+    // until I figure out exactly how the parser would process then
+    //CAN HAVE:  constant exprs, new array expressions, super/this, a whole dispatch expression, instanceof, array, math, var on right side
+    //CAN'T HAVE: VarExpr on the left side, BlockExpressions, break, DeclStmt, Formal, ExprStmt, anything on left, ReturnStmt
+    //  TODO change any nodes that can't have parens outright so the constructor doesn't let you choose
+
     private void advance() {
         while((currentToken = scanner.scan()).kind == Token.Kind.COMMENT){
             comments += currentToken.spelling;
