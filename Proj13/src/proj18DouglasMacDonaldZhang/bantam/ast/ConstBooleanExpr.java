@@ -49,6 +49,8 @@ public class ConstBooleanExpr extends ConstExpr {
         super(lineNum, constant, comments, hasParens);
     }
 
+
+
     /**
      * Visitor method
      *

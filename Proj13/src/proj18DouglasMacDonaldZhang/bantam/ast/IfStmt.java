@@ -115,14 +115,27 @@ public class IfStmt extends Stmt {
         return comments;
     }
 
+
     /**
-     * toString method to write the node as a string
+     * toString method to write the node as a string. Will not work, leaving it here in case I can figure out a fix in the future -Tia
      *
      * @return a string of bantam java code
      */
-    public String toString() {
-       return "nothing";
-    }
+    /*public String toString(int numTabs) {
+        String tabs = "";
+        for(int i = 0; i < numTabs; i++){
+            tabs += "\t";
+        }
+        String ifString = tabs;
+        ifString += "if( " + predExpr.toString() +  "){";
+        ifString += thenStmt.toString() + "\n}"; //Stmt should begin with a new line character - but that means I can't control the number of tabs. Never mind, ignore this method
+        if(elseStmt != null){
+            ifString += "\nelse{";
+            ifString += elseStmt.toString() + "}";
+        }
+        return  ifString;
+    }*/
+
 
     /**
      * Visitor method

@@ -64,6 +64,14 @@ public class NewExpr extends Expr {
         return type;
     }
 
+    /*
+     * Converts into Bantam Java code
+     * @return Bantam Java code in String form
+     */
+    public String toString(){
+        return "new " + type + "()"; //Semicolon will come from the statement it's on
+    }
+
     /**
      * Visitor method
      *

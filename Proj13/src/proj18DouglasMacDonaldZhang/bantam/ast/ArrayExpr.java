@@ -99,6 +99,21 @@ public class ArrayExpr extends Expr {
         return index;
     }
 
+
+    /*
+     * Converts into Bantam Java code
+     * @return Bantam Java code in String form
+     */
+    public String toString(){
+        String arrAssignStr = "";
+        if(ref != null){
+            arrAssignStr += ref.toString() + ".";
+        }
+        arrAssignStr += name + "[" + index +"]";
+        return arrAssignStr;
+    }
+
+
     /**
      * Visitor method
      *

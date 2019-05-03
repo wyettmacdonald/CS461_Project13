@@ -98,6 +98,19 @@ public class AssignExpr extends Expr {
         return expr;
     }
 
+    /*
+    * Converts into Bantam Java code
+    * @return Bantam Java code in String form
+    */
+    public String toString(){
+        String arrAssignStr = "";
+        if(refName != null){
+            arrAssignStr += refName + ".";
+        }
+        arrAssignStr += name + " = " + expr.toString();
+        return arrAssignStr;
+    }
+
     /**
      * Visitor method
      *

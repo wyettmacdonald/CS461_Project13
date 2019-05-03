@@ -115,6 +115,20 @@ public class ArrayAssignExpr extends Expr {
         return expr;
     }
 
+
+    /*
+     * Converts into Bantam Java code
+     * @return Bantam Java code in String form
+     */
+    public String toString(){
+        String arrAssignStr = "";
+        if(refName != null){
+            arrAssignStr += refName + ".";
+        }
+        arrAssignStr += name + "[" + index +"]" + " = " + expr.toString(); //TODO Is this a statement or not? ExprStmt?
+        return arrAssignStr;
+    }
+
     /**
      * Visitor method
      *

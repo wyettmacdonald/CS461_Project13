@@ -80,6 +80,14 @@ public class NewArrayExpr extends Expr {
         return size;
     }
 
+    /*
+     * Converts into Bantam Java code
+     * @return Bantam Java code in String form
+     */
+    public String toString(){
+        return " new " + type + "[" + size.toString() + "]";
+    }
+
     /**
      * Visitor method
      *

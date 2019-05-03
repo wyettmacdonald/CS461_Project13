@@ -128,9 +128,9 @@ public class Class_ extends ASTNode {
      */
     public String toString() {
         if(parent != null) {
-            return "class " + name +  " extends " + parent + " {\n";
+            return "class " + name +  " extends " + parent + " {";
         }
-        return "class " + name + " {\n";
+        return "class " + name + " {";
     }
 
     /**

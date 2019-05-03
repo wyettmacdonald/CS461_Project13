@@ -64,6 +64,11 @@ public class ExprStmt extends Stmt {
         return expr;
     }
 
+
+    public String toString(){
+        return "\n" + expr.toString() +";";
+    }
+
     /**
      * Visitor method
      *

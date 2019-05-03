@@ -180,13 +180,13 @@ public class PrintVisitor extends Visitor {
     public Object visit(DeclStmt node) {
 //        String type = node.getType();
 //        String name = node.getName();
-
+        printString += node.getComments();
         printString += "\n" + getTab() + node.toString();
-        Expr initExpr = node.getInit();
+        /*Expr initExpr = node.getInit();
         if (initExpr != null) {
             initExpr.accept(this);
             printString += ";";
-        }
+        }*/
         return null;
     }
 
@@ -409,12 +409,18 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(VarExpr node) {
         //check that ref.name is legit
-        String varName = node.getName();
+
+        /*String varName = node.getName();
         Expr expr = node.getRef();
         if(expr != null) {
             node.getRef().accept(this);
         }
-        printString += varName;
+        printString += varName;*/
+
+        //Tia addition
+
+        printString += node.toString();
+
         return null;
     }
 

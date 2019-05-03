@@ -65,6 +65,15 @@ public abstract class ConstExpr extends Expr {
         return constant;
     }
 
+
+    /*
+     * Converts into Bantam Java code
+     * @return Bantam Java code in String form
+     */
+    public String toString(){
+        return constant;
+    }
+
     /**
      * Visitor method
      *

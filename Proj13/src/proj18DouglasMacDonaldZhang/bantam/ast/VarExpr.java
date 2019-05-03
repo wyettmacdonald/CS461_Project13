@@ -86,6 +86,16 @@ public class VarExpr extends Expr {
         return name;
     }
 
+    public String toString(){
+        String varString = "";
+        if(ref != null){
+            varString += ref.toString() + ".";
+        }
+        varString += name;
+
+        return varString;
+    }
+
     /**
      * Visitor method
      *
