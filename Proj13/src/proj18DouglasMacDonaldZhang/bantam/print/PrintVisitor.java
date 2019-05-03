@@ -181,12 +181,14 @@ public class PrintVisitor extends Visitor {
 //        String type = node.getType();
 //        String name = node.getName();
         printString += node.getComments();
-        printString += "\n" + getTab() + node.toString();
+//        printString += "\n" + getTab() + node.toString();
+        printString += "\n" + getTab() + node.getName();
         Expr initExpr = node.getInit();
         if (initExpr != null) {
+            printString += " = ";
             initExpr.accept(this);
-            printString += ";";
         }
+        printString += ";";
         return null;
     }
 
@@ -376,6 +378,7 @@ public class PrintVisitor extends Visitor {
     public Object visit(InstanceofExpr node) {
         String type = node.getType();
         if (node.hasParens()) {
+            System.out.println("getting here");
             printString += "( ";
             node.getExpr().accept(this);
             printString += " instanceof" + type + " )";
@@ -482,7 +485,7 @@ public class PrintVisitor extends Visitor {
         printString += node.getComments();
 //        printString += node.toString();
         if (node.hasParens()) {
-            printString += " (new " + node.getType() + "[" + node.getSize().toString() + "]";
+            printString += " (new " + node.getType() + "[" + node.getSize().toString() + "])";
         } else {
             printString += " new " + node.getType() + "[" + node.getSize().toString() + "]";
         }
