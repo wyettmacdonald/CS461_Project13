@@ -51,6 +51,7 @@ public class Parser
     private Token currentToken;
     private ErrorHandler errorHandler;
     private String comments = "";
+    private boolean hasParens;
 
 
     // constructor
@@ -539,7 +540,7 @@ public class Parser
             String lhsName = lhs.getName();
             String lhsRefName = (lhs.getRef() == null ? null :
                     ((VarExpr) lhs.getRef()).getName());
-            result = new AssignExpr(position, lhsRefName, lhsName, right, beginningComments, false);
+            result = new AssignExpr(position, lhsRefName, lhsName, right, beginningComments, hasParens);
         }
         else if (currentToken.kind == ASSIGN && result instanceof ArrayExpr) {
             advance();
@@ -558,7 +559,7 @@ public class Parser
             String lhsRefName = (lhsExpr.getRef() == null ? null :
                     ((VarExpr) lhsExpr.getRef()).getName());
             Expr index = lhs.getIndex();
-            result = new ArrayAssignExpr(position, lhsRefName, lhsName, index, right, beginningComments, false);
+            result = new ArrayAssignExpr(position, lhsRefName, lhsName, index, right, beginningComments, hasParens);
         }
 
         return result;
@@ -576,7 +577,7 @@ public class Parser
         while (currentToken.spelling.equals("||")) {
             advance();
             Expr right = parseAndExpr();
-            left = new BinaryLogicOrExpr(position, left, right, beginningComments, false);
+            left = new BinaryLogicOrExpr(position, left, right, beginningComments, hasParens);
         }
 
         return left;
@@ -592,7 +593,7 @@ public class Parser
         while (currentToken.spelling.equals("&&")) {
             advance();
             Expr right = parseComparisonExpr();
-            left = new BinaryLogicAndExpr(position, left, right, beginningComments, false);
+            left = new BinaryLogicAndExpr(position, left, right, beginningComments, hasParens);
         }
 
         return left;
@@ -610,12 +611,12 @@ public class Parser
         if (currentToken.spelling.equals("==")) {
             advance();
             Expr right = parseRelationalExpr();
-            left = new BinaryCompEqExpr(position, left, right, beginningComments, false);
+            left = new BinaryCompEqExpr(position, left, right, beginningComments, hasParens);
         }
         else if (currentToken.spelling.equals("!=")) {
             advance();
             Expr right = parseRelationalExpr();
-            left = new BinaryCompNeExpr(position, left, right, beginningComments, false);
+            left = new BinaryCompNeExpr(position, left, right, beginningComments, hasParens);
         }
 
         return left;
@@ -634,23 +635,23 @@ public class Parser
             case "<":
                 advance();
                 right = parseAddExpr();
-                return new BinaryCompLtExpr(position, left, right, beginningComments, false);
+                return new BinaryCompLtExpr(position, left, right, beginningComments, hasParens);
             case "<=":
                 advance();
                 right = parseAddExpr();
-                return new BinaryCompLeqExpr(position, left, right, beginningComments, false);
+                return new BinaryCompLeqExpr(position, left, right, beginningComments, hasParens);
             case ">":
                 advance();
                 right = parseAddExpr();
-                return new BinaryCompGtExpr(position, left, right, beginningComments, false);
+                return new BinaryCompGtExpr(position, left, right, beginningComments, hasParens);
             case ">=":
                 advance();
                 right = parseAddExpr();
-                return new BinaryCompGeqExpr(position, left, right, beginningComments, false);
+                return new BinaryCompGeqExpr(position, left, right, beginningComments, hasParens);
             case "instanceof":
                 advance();
                 String type = parseType();
-                return new InstanceofExpr(position, left, type, beginningComments, false);
+                return new InstanceofExpr(position, left, type, beginningComments, hasParens);
         }
 
         return left;
@@ -668,12 +669,12 @@ public class Parser
             if (currentToken.spelling.equals("+")) {
                 advance();
                 Expr right = parseMultExpr();
-                left = new BinaryArithPlusExpr(position, left, right, beginningComments, false);
+                left = new BinaryArithPlusExpr(position, left, right, beginningComments, hasParens);
             }
             else {
                 advance();
                 Expr right = parseMultExpr();
-                left = new BinaryArithMinusExpr(position, left, right, beginningComments, false);
+                left = new BinaryArithMinusExpr(position, left, right, beginningComments, hasParens);
             }
         }
 
@@ -698,17 +699,17 @@ public class Parser
                 case "/":
                     advance();
                     right = parseNewCastOrUnary();
-                    left = new BinaryArithDivideExpr(position, left, right, beginningComments, false);
+                    left = new BinaryArithDivideExpr(position, left, right, beginningComments, hasParens);
                     break;
                 case "*":
                     advance();
                     right = parseNewCastOrUnary();
-                    left = new BinaryArithTimesExpr(position, left, right, beginningComments, false);
+                    left = new BinaryArithTimesExpr(position, left, right, beginningComments, hasParens);
                     break;
                 case "%":
                     advance();
                     right = parseNewCastOrUnary();
-                    left = new BinaryArithModulusExpr(position, left, right, beginningComments, false);
+                    left = new BinaryArithModulusExpr(position, left, right, beginningComments, hasParens);
                     break;
             }
         }
@@ -745,13 +746,13 @@ public class Parser
         if (currentToken.kind == LPAREN) {
             advance();
             advanceIfMatches(RPAREN);
-            return new NewExpr(position, type, beginningComments, false);
+            return new NewExpr(position, type, beginningComments, hasParens);
         }
         else {
             advanceIfMatches(LBRACKET);
             Expr sizeExpr = parseExpression();
             advanceIfMatches(RBRACKET);
-            return new NewArrayExpr(position, type, sizeExpr, beginningComments, false);
+            return new NewArrayExpr(position, type, sizeExpr, beginningComments, hasParens);
         }
     }
 
@@ -770,7 +771,7 @@ public class Parser
         Expr expression = parseExpression();
         advanceIfMatches(RPAREN);
 
-        castExpression = new CastExpr(position, type, expression, beginningComments, false);
+        castExpression = new CastExpr(position, type, expression, beginningComments, hasParens);
         return castExpression;
     }
 
@@ -787,17 +788,17 @@ public class Parser
             advance();
             Expr expr = parseUnaryPrefix();
             if (kind == PLUSMINUS) {
-                return new UnaryNegExpr(position, expr, beginningComments, false);
+                return new UnaryNegExpr(position, expr, beginningComments, hasParens);
             }
             else if (kind == UNARYDECR) {
-                return new UnaryDecrExpr(position, expr, false, beginningComments, false);
+                return new UnaryDecrExpr(position, expr, false, beginningComments, hasParens);
             }
             else if (kind == UNARYINCR) {
-                return new UnaryIncrExpr(position, expr, false, beginningComments, false);
+                return new UnaryIncrExpr(position, expr, false, beginningComments, hasParens);
             }
             else // kind == UNARYNOT
             {
-                return new UnaryNotExpr(position, expr, beginningComments, false);
+                return new UnaryNotExpr(position, expr, beginningComments, hasParens);
             }
         }
         else {
@@ -818,11 +819,11 @@ public class Parser
 
         unary = parsePrimary();
         if (currentToken.kind == UNARYINCR) {
-            unary = new UnaryIncrExpr(position, unary, true, beginningComments, false);
+            unary = new UnaryIncrExpr(position, unary, true, beginningComments, hasParens);
             advance();
         }
         else if (currentToken.kind == UNARYDECR) {
-            unary = new UnaryDecrExpr(position, unary, true, beginningComments, false);
+            unary = new UnaryDecrExpr(position, unary, true, beginningComments, hasParens);
             advance();
         }
 
@@ -863,7 +864,7 @@ public class Parser
         Expr primary;
 
         String beginningComments = beginNewComments();
-        boolean hasParens = false;
+        hasParens = false;
 
         switch (currentToken.kind) {
             case INTCONST:
@@ -1007,7 +1008,7 @@ public class Parser
 
         String beginningComments = beginNewComments();
         advanceIfMatches(STRCONST);
-        return new ConstStringExpr(position, reformat(spelling, true), beginningComments, false);
+        return new ConstStringExpr(position, reformat(spelling, true), beginningComments, hasParens);
     }
 
 
@@ -1017,7 +1018,7 @@ public class Parser
 
         String beginningComments = beginNewComments();
         advanceIfMatches(INTCONST);
-        return new ConstIntExpr(position, spelling, beginningComments, false);
+        return new ConstIntExpr(position, spelling, beginningComments, hasParens);
     }
 
 
@@ -1027,7 +1028,7 @@ public class Parser
 
         String beginningComments = beginNewComments();
         advanceIfMatches(BOOLEAN);
-        return new ConstBooleanExpr(position, spelling, beginningComments, false);
+        return new ConstBooleanExpr(position, spelling, beginningComments, hasParens);
     }
 
 
