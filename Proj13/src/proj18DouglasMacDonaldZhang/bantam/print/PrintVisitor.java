@@ -51,7 +51,7 @@ public class PrintVisitor extends Visitor {
      */
     public String getTab() {
         String tabs = "";
-        if(!curTab.empty()) {
+        if (!curTab.empty()) {
             for (String tab : curTab) {
                 tabs += tab;
             }
@@ -120,7 +120,7 @@ public class PrintVisitor extends Visitor {
         Expr expr = node.getInit();
         printString += getTab() + node.getComments();
         printString += "\n" + getTab() + node.toString();
-        if(expr != null) {
+        if (expr != null) {
             expr.accept(this);
             printString += ";";
         }
@@ -205,7 +205,7 @@ public class PrintVisitor extends Visitor {
         curTab.pop();
         printString += "\n" + getTab() + "}";
         Stmt stmt = node.getElseStmt();
-        if(stmt != null) {
+        if (stmt != null) {
             printString += getTab() + "else {\n";
             addTab();
             stmt.accept(this);
@@ -286,7 +286,7 @@ public class PrintVisitor extends Visitor {
     public Object visit(ReturnStmt node) {
         Expr expr = node.getExpr();
         printString += "\n" + getTab() + "return";
-        if(expr != null) {
+        if (expr != null) {
             node.getExpr().accept(this);
         }
         printString += ";";
@@ -300,12 +300,19 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(DispatchExpr node) {
+//        System.out.println(node.getMethodName() + " " + parens);
         String name = node.getMethodName();
         Expr expr = node.getRefExpr();
         printString += "\n" + getTab();
-        if(expr != null) {
-            expr.accept(this);
-            printString += ".";
+        if (expr != null) {
+            if (node.hasParens()) {
+                printString += "(";
+                expr.accept(this);
+                printString += ").";
+            } else {
+                expr.accept(this);
+                printString += ".";
+            }
         }
         printString += name + "(";
         node.getActualList().accept(this);
@@ -314,6 +321,7 @@ public class PrintVisitor extends Visitor {
     }
 
     // TODO: this could be useful for project 18
+
     /**
      * returns a list of the types of the formal parameters
      *
@@ -351,7 +359,11 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(NewExpr node) {
         String type = node.getType();
-        printString += "new " + type + "()";
+        if (node.hasParens()) {
+            printString += "(new " + type + "())";
+        } else {
+            printString += "new " + type + "()";
+        }
         return null;
     }
 
@@ -363,8 +375,14 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(InstanceofExpr node) {
         String type = node.getType();
-        node.getExpr().accept(this);
-        printString += " instanceof " + type;
+        if (node.hasParens()) {
+            printString += "( ";
+            node.getExpr().accept(this);
+            printString += " instanceof" + type + " )";
+        } else {
+            node.getExpr().accept(this);
+            printString += " instanceof " + type;
+        }
         return null;
     }
 
@@ -376,8 +394,16 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(CastExpr node) {
         String type = node.getType();
-        printString += "cast(" + type + ", ";
-        node.getExpr().accept(this);
+        if (node.hasParens()) {
+            printString += "(cast(" + type + ", ";
+            node.getExpr().accept(this);
+            printString += "))";
+
+        } else {
+            printString += "cast(" + type + ", ";
+            node.getExpr().accept(this);
+            printString += ")";
+        }
         return null;
     }
 
@@ -391,13 +417,20 @@ public class PrintVisitor extends Visitor {
         String varName = node.getName();
         String refName = node.getRefName();
         printString += node.getComments();
-        printString += "\n" + getTab() + node.toString();
-//        if(refName != null) {
-//            printString += refName + ".";
-//        }
-//        printString += varName + " = ";
-        node.getExpr().accept(this);
-        printString += ";";
+//        printString += "\n" + getTab() + node.toString();
+        printString += "\n" + getTab();
+        if (refName != null) {
+            printString += refName + ".";
+        }
+        printString += varName + " = ";
+        if (node.hasParens()) {
+            printString += "(";
+            node.getExpr().accept(this);
+            printString += ");";
+        } else {
+            node.getExpr().accept(this);
+            printString += ";";
+        }
         return null;
     }
 
@@ -410,21 +443,35 @@ public class PrintVisitor extends Visitor {
     public Object visit(VarExpr node) {
         //check that ref.name is legit
 
-        /*String varName = node.getName();
+        String varName = node.getName();
         Expr expr = node.getRef();
-        if(expr != null) {
-            node.getRef().accept(this);
+        if (expr != null) {
+            if (node.hasParens()) {
+                printString += "(";
+                node.getRef().accept(this);
+                printString += "." + varName + ")";
+            } else {
+                node.getRef().accept(this);
+                printString += "." + varName;
+            }
         }
-        printString += varName;*/
+        else {
+            if (node.hasParens()) {
+                printString += "(" + varName + ")";
+            } else {
+                printString += varName;
+            }
+        }
 
         //Tia addition
 
-        printString += node.toString();
+//        printString += node.toString();
 
         return null;
     }
 
     // TODO: Implement arrays?
+
     /**
      * Visit a new array expression node
      *
@@ -433,7 +480,12 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(NewArrayExpr node) {
         printString += node.getComments();
-        printString += node.toString();
+//        printString += node.toString();
+        if (node.hasParens()) {
+            printString += " (new " + node.getType() + "[" + node.getSize().toString() + "]";
+        } else {
+            printString += " new " + node.getType() + "[" + node.getSize().toString() + "]";
+        }
         return null;
     }
 
@@ -445,14 +497,49 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(ArrayExpr node) {
         printString += node.getComments();
-        printString += node.toString();
-//        Expr expr = node.getRef();
-//        if(expr != null) {
-//            expr.accept(this);
-//            printString += ".";
-//        }
-//        printString += node.getName();
-//        node.getIndex().accept(this);
+//        printString += node.toString();
+        Expr expr = node.getRef();
+        if (expr != null) {
+            if (node.hasParens()) {
+                printString += "(";
+                expr.accept(this);
+                if (node.getName() != null) {
+                    printString += "." + node.getName() + "[";
+                    node.getIndex().accept(this);
+                    printString += "])";
+                }
+                else {
+                    printString += "[";
+                    node.getIndex().accept(this);
+                    printString += "])";
+                }
+            }
+            else {
+                expr.accept(this);
+                if (node.getName() != null) {
+                    printString += "." + node.getName() + "[";
+                    node.getIndex().accept(this);
+                    printString += "]";
+                }
+                else {
+                    printString += "[";
+                    node.getIndex().accept(this);
+                    printString += "]";
+                }
+            }
+        }
+        else {
+            if (node.hasParens()) {
+                printString += "(" + node.getName() + "[";
+                node.getIndex().accept(this);
+                printString += "])";
+            }
+            else {
+                printString += node.getName() + "[";
+                node.getIndex().accept(this);
+                printString += "]";
+            }
+        }
         return null;
     }
 
@@ -463,9 +550,18 @@ public class PrintVisitor extends Visitor {
      * @param op Operator for the node
      */
     public void visitBinary(BinaryExpr node, String op) {
-        node.getLeftExpr().accept(this);
-        printString += " " + op + " ";
-        node.getRightExpr().accept(this);
+        if(node.hasParens()) {
+            printString += "(";
+            node.getLeftExpr().accept(this);
+            printString += " " + op + " ";
+            node.getRightExpr().accept(this);
+            printString += ")";
+        }
+        else {
+            node.getLeftExpr().accept(this);
+            printString += " " + op + " ";
+            node.getRightExpr().accept(this);
+        }
     }
 
     /**
@@ -607,8 +703,8 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryLogicOrExpr node) {
-//        visitBinary(node, node.getOpName());
-        printString += node.toString();
+        visitBinary(node, node.getOpName());
+//        printString += node.toString();
         return null;
     }
 
@@ -620,8 +716,16 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(UnaryNegExpr node) {
         String op = node.getOpName();
-        printString += op;
-        node.getExpr().accept(this);
+        if(node.hasParens()) {
+
+            printString += "(" + op;
+            node.getExpr().accept(this);
+            printString += ")";
+        }
+        else {
+            printString += op;
+            node.getExpr().accept(this);
+        }
         return null;
     }
 
@@ -633,8 +737,16 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(UnaryNotExpr node) {
         String op = node.getOpName();
-        printString += op;
-        node.getExpr().accept(this);
+        if(node.hasParens()) {
+
+            printString += "(" + op;
+            node.getExpr().accept(this);
+            printString += ")";
+        }
+        else {
+            printString += op;
+            node.getExpr().accept(this);
+        }
         return null;
     }
 
@@ -648,25 +760,53 @@ public class PrintVisitor extends Visitor {
         String name = node.getOpName();
         if(node.isPostfix()) {
             if(inForLoop) {
-                node.getExpr().accept(this);
-                printString += name;
+                if(node.hasParens()) {
+                    printString += "(";
+                    node.getExpr().accept(this);
+                    printString += name + ")";
+                }
+                else {
+                    node.getExpr().accept(this);
+                    printString += name;
+                }
             }
             else {
-                printString += "\n" + getTab();
-                node.getExpr().accept(this);
-                printString += name + ";";
+                if(node.hasParens()) {
+                    printString += "\n" + getTab() + "(";
+                    node.getExpr().accept(this);
+                    printString += name + ");";
+                }
+                else {
+                    printString += "\n" + getTab();
+                    node.getExpr().accept(this);
+                    printString += name + ";";
+                }
             }
         }
         else {
             if(inForLoop) {
-                printString += name;
-                node.getExpr().accept(this);
+                if(node.hasParens()) {
+                    printString += "(" + name;
+                    node.getExpr().accept(this);
+                    printString += ")";
+                }
+                else {
+                    printString += name;
+                    node.getExpr().accept(this);
+                }
             }
             else {
-                printString += "\n" + getTab();
-                printString += name;
-                node.getExpr().accept(this);
-                printString += ";";
+                if(node.hasParens()) {
+                    printString += "\n" + getTab() + "(" + name;
+                    node.getExpr().accept(this);
+                    printString += ";";
+                }
+                else {
+                    printString += "\n" + getTab();
+                    printString += name;
+                    node.getExpr().accept(this);
+                    printString += ";";
+                }
             }
         }
         return null;
@@ -682,25 +822,53 @@ public class PrintVisitor extends Visitor {
         String name = node.getOpName();
         if(node.isPostfix()) {
             if(inForLoop) {
-                node.getExpr().accept(this);
-                printString += name;
+                if(node.hasParens()) {
+                    printString += "(";
+                    node.getExpr().accept(this);
+                    printString += name + ")";
+                }
+                else {
+                    node.getExpr().accept(this);
+                    printString += name;
+                }
             }
             else {
-                printString += "\n" + getTab();
-                node.getExpr().accept(this);
-                printString += name + ";";
+                if(node.hasParens()) {
+                    printString += "\n" + getTab() + "(";
+                    node.getExpr().accept(this);
+                    printString += name + ");";
+                }
+                else {
+                    printString += "\n" + getTab();
+                    node.getExpr().accept(this);
+                    printString += name + ";";
+                }
             }
         }
         else {
             if(inForLoop) {
-                printString += name;
-                node.getExpr().accept(this);
+                if(node.hasParens()) {
+                    printString += "(" + name;
+                    node.getExpr().accept(this);
+                    printString += ")";
+                }
+                else {
+                    printString += name;
+                    node.getExpr().accept(this);
+                }
             }
             else {
-                printString += "\n" + getTab();
-                printString += name;
-                node.getExpr().accept(this);
-                printString += ";";
+                if(node.hasParens()) {
+                    printString += "\n" + getTab() + "(" + name;
+                    node.getExpr().accept(this);
+                    printString += ";";
+                }
+                else {
+                    printString += "\n" + getTab();
+                    printString += name;
+                    node.getExpr().accept(this);
+                    printString += ";";
+                }
             }
         }
         return null;
@@ -714,7 +882,12 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(ConstIntExpr node) {
         String num = node.getConstant();
-        printString += num;
+        if(node.hasParens()) {
+            printString += "(" + num + ")";
+        }
+        else {
+            printString += num;
+        }
         return null;
     }
 
@@ -726,7 +899,12 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(ConstBooleanExpr node) {
         String constBool = node.getConstant();
-        printString += constBool;
+        if(node.hasParens()) {
+            printString += "(" + constBool + ")";
+        }
+        else {
+            printString += constBool;
+        }
         return null;
     }
 
@@ -738,7 +916,12 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(ConstStringExpr node) {
         String constString = node.getConstant();
-        printString += "\"" + constString + "\"";
+        if(node.hasParens()) {
+            printString += "(\"" + constString + "\")";
+        }
+        else {
+            printString += "\"" + constString + "\"";
+        }
         return null;
     }
 
