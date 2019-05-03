@@ -66,7 +66,7 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(Program node) {
-        printString += node.getComments();
+        printString += indentComments(node.getComments());
         node.getClassList().accept(this);
         printString += node.getEndComments();
 
@@ -92,8 +92,9 @@ public class PrintVisitor extends Visitor {
 //        node.getMemberList().accept(this);
 //        curTab.pop();
 //        printString += getTab() + "}\n";
-        printString += getTab() + node.getComments();
-        printString += "\n" + getTab() + node.toString();
+        printString += indentComments(node.getComments());
+        printString +=  getTab() + node.toString(); //Tia addition - removing new line because comments should handle it
+        //printString += "\n" + getTab() + node.toString();
         addTab();
         node.getMemberList().accept(this);
         curTab.pop();
@@ -118,8 +119,8 @@ public class PrintVisitor extends Visitor {
 //        }
 //        printString += ";\n";
         Expr expr = node.getInit();
-        printString += getTab() + node.getComments();
-        printString += "\n" + getTab() + node.toString();
+        printString += indentComments(node.getComments());
+        printString +=  getTab() + node.toString(); //Tia addition - removing new line because comments should handle it
         if (expr != null) {
             expr.accept(this);
             printString += ";";
@@ -147,8 +148,8 @@ public class PrintVisitor extends Visitor {
 //        node.getStmtList().accept(this);
 //        curTab.pop();
 //        printString += getTab() + "}\n\n";
-        printString += getTab() + node.getComments();
-        printString += "\n" + getTab() + node.toString();
+        printString += indentComments(node.getComments());
+        printString +=  getTab() + node.toString(); //Tia addition - removing new line because comments should handle it
         node.getFormalList().accept(this);
         printString += ") {\n";
         addTab();
@@ -180,15 +181,13 @@ public class PrintVisitor extends Visitor {
     public Object visit(DeclStmt node) {
 //        String type = node.getType();
 //        String name = node.getName();
-        printString += node.getComments();
-//        printString += "\n" + getTab() + node.toString();
-        printString += "\n" + getTab() + node.getName();
+        printString += indentComments(node.getComments());
+        printString +=  getTab() + node.toString(); //Tia addition - removing new line because comments should handle it
         Expr initExpr = node.getInit();
         if (initExpr != null) {
-            printString += " = ";
             initExpr.accept(this);
+            printString += ";";
         }
-        printString += ";";
         return null;
     }
 
@@ -378,7 +377,6 @@ public class PrintVisitor extends Visitor {
     public Object visit(InstanceofExpr node) {
         String type = node.getType();
         if (node.hasParens()) {
-            System.out.println("getting here");
             printString += "( ";
             node.getExpr().accept(this);
             printString += " instanceof" + type + " )";
@@ -419,7 +417,7 @@ public class PrintVisitor extends Visitor {
     public Object visit(AssignExpr node) {
         String varName = node.getName();
         String refName = node.getRefName();
-        printString += node.getComments();
+        printString += indentComments(node.getComments());
 //        printString += "\n" + getTab() + node.toString();
         printString += "\n" + getTab();
         if (refName != null) {
@@ -482,10 +480,10 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(NewArrayExpr node) {
-        printString += node.getComments();
+        printString += indentComments(node.getComments());
 //        printString += node.toString();
         if (node.hasParens()) {
-            printString += " (new " + node.getType() + "[" + node.getSize().toString() + "])";
+            printString += " (new " + node.getType() + "[" + node.getSize().toString() + "]";
         } else {
             printString += " new " + node.getType() + "[" + node.getSize().toString() + "]";
         }
@@ -499,7 +497,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(ArrayExpr node) {
-        printString += node.getComments();
+        printString += indentComments(node.getComments());
 //        printString += node.toString();
         Expr expr = node.getRef();
         if (expr != null) {
@@ -926,6 +924,16 @@ public class PrintVisitor extends Visitor {
             printString += "\"" + constString + "\"";
         }
         return null;
+    }
+
+
+    private String indentComments(String comments){
+        String indentedComments = "";
+        String[] commentsByLine = comments.split("\n");
+        for(int i = 0; i < commentsByLine.length; i++){
+            indentedComments += getTab() + commentsByLine[i] + "\n";
+        }
+        return indentedComments;
     }
 
 }
