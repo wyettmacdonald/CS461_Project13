@@ -56,8 +56,8 @@ public class WhileStmt extends Stmt {
      * @param bodyStmt the then statement
      */
     public WhileStmt(int lineNum, Expr predExpr, Stmt bodyStmt,
-    String comments, boolean hasParens) {
-        super(lineNum, comments, hasParens);
+    String comments) {
+        super(lineNum, comments);
         this.predExpr = predExpr;
         this.bodyStmt = bodyStmt;
     }

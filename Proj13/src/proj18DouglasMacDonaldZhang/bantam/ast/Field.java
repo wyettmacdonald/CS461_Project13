@@ -61,8 +61,8 @@ public class Field extends Member {
      * @param init    the (optional) initialization expression for the field (instance variable)
      */
     public Field(int lineNum, String type, String name, Expr init,
-                 String comments, boolean hasParens) {
-        super(lineNum, comments, hasParens);
+                 String comments) {
+        super(lineNum, comments);
         this.type = type;
         this.name = name;
         this.init = init;

@@ -77,7 +77,7 @@ public class Parser
     //Tia notes: I've currently marked parentheses as impossible for everything
     // until I figure out exactly how the parser would process then
     //CAN HAVE:  constant exprs, new array expressions, super/this, a whole dispatch expression, instanceof, array, math, var on right side
-    //CAN'T HAVE: VarExpr on the left side, BlockExpressions, break, DeclStmt, Formal, ExprStmt, anything on left, ReturnStmt
+    //CAN'T HAVE: VarExpr on the left side, BlockStmt, break, DeclStmt, Formal, ExprStmt, anything on left, ReturnStmt
     //  TODO change any nodes that can't have parens outright so the constructor doesn't let you choose
 
     private void advance() {
@@ -145,7 +145,7 @@ public class Parser
             clist.addElement(aClass);
         }
         // TODO check if you can put parentheses around a Program
-        return new Program(position, clist, beginningComments, false, beginNewComments());
+        return new Program(position, clist, beginningComments,  beginNewComments());
     }
 
     /*
@@ -303,7 +303,7 @@ public class Parser
             FormalList parameters = parseParameters();
             advanceIfMatches(RPAREN);
             stmt = (BlockStmt) parseBlock();
-            method = new Method(position, type, id, parameters, stmt.getStmtList(), beginningComments, false);
+            method = new Method(position, type, id, parameters, stmt.getStmtList(), beginningComments);
             return method;
         }
 
@@ -317,7 +317,7 @@ public class Parser
 
             advanceIfMatches(SEMICOLON);
 
-            return new Field(position, type, id, init, beginningComments, false);
+            return new Field(position, type, id, init, beginningComments);
         }
 
     }
@@ -370,7 +370,7 @@ public class Parser
         advanceIfMatches(RPAREN);
         Stmt execution = parseStatement();
 
-        return new WhileStmt(position, expression, execution, beginningComments, false);
+        return new WhileStmt(position, expression, execution, beginningComments);
     }
 
 
@@ -394,7 +394,7 @@ public class Parser
     //<BreakStmt>::= BREAK ;
     private Stmt parseBreak() {
         String beginningComments = beginNewComments();
-        Stmt stmt = new BreakStmt(currentToken.position, beginningComments, false);
+        Stmt stmt = new BreakStmt(currentToken.position, beginningComments);
         advance();
         advanceIfMatches(SEMICOLON);
         return stmt;
@@ -424,7 +424,7 @@ public class Parser
         advanceIfMatches(ASSIGN);
         Expr value = parseExpression();
 
-        stmt = new DeclStmt(position, id, value, beginningComments, false);
+        stmt = new DeclStmt(position, id, value, beginningComments);
         advanceIfMatches(SEMICOLON);
 
         return stmt;
@@ -483,7 +483,7 @@ public class Parser
         }
         advanceIfMatches(RCURLY);
 
-        return new BlockStmt(position, stmtList, beginningComments, false);
+        return new BlockStmt(position, stmtList, beginningComments);
     }
 
 
@@ -859,6 +859,7 @@ public class Parser
         Expr primary;
 
         String beginningComments = beginNewComments();
+        boolean hasParens = false;
 
         switch (currentToken.kind) {
             case INTCONST:
@@ -870,6 +871,7 @@ public class Parser
                 break;
             case LPAREN:
                 advance();
+                hasParens = true;
                 primary = parseExpression();
                 advanceIfMatches(RPAREN);
                 if(currentToken.kind == LPAREN) //cannot have ( expr )( args )
@@ -885,25 +887,25 @@ public class Parser
         while (    currentToken.kind == DOT
                 || currentToken.kind == LPAREN && primary instanceof VarExpr
                 || currentToken.kind == LBRACKET) {
-            beginningComments = beginNewComments(); //I think technically, only in the first round of looping could this contain anything TODO verify
+            beginningComments = beginNewComments();
             if (currentToken.kind == LPAREN) {
                 advance();
                 ExprList ar = parseArguments();
                 advanceIfMatches(RPAREN);
                 VarExpr varExpr = (VarExpr) primary;
                 primary = new DispatchExpr(primary.getLineNum(), varExpr.getRef(),
-                        varExpr.getName(), ar, beginningComments, false);
+                        varExpr.getName(), ar, beginningComments, hasParens);
             }
             else if (currentToken.kind == LBRACKET) {
                 advance();
                 Expr index = parseExpression();
                 advanceIfMatches(RBRACKET);
-                primary = new ArrayExpr(primary.getLineNum(), primary, null, index, beginningComments, false);
+                primary = new ArrayExpr(primary.getLineNum(), primary, null, index, beginningComments, hasParens);
             }
             else { // currentToken is a DOT
                 advance();
                 String id = parseIdentifier();
-                primary = new VarExpr(currentToken.position, primary, id, beginningComments, false);
+                primary = new VarExpr(currentToken.position, primary, id, beginningComments, hasParens);
             }
         }
 

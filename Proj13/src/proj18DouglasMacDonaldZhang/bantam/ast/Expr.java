@@ -57,13 +57,20 @@ public abstract class Expr extends ASTNode {
      */
     private String exprType = null;
 
+    private boolean hasParens;
+
     /**
      * Expr constructor
      *
      * @param lineNum source line number corresponding to this AST node
      */
     public Expr(int lineNum, String comments, boolean hasParens) {
-        super(lineNum, comments, hasParens);
+        super(lineNum, comments);
+        this.hasParens = hasParens;
+    }
+
+    public boolean hasParens() {
+        return hasParens;
     }
 
     /**

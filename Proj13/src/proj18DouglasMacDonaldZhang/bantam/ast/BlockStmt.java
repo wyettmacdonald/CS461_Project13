@@ -48,8 +48,8 @@ public class BlockStmt extends Stmt {
      * @param lineNum  source line number corresponding to this AST node
      * @param stmtList a list of statements
      */
-    public BlockStmt(int lineNum, StmtList stmtList, String comments, boolean hasParens) {
-        super(lineNum, comments, hasParens);
+    public BlockStmt(int lineNum, StmtList stmtList, String comments) {
+        super(lineNum, comments);
         this.stmtList = stmtList;
     }
 

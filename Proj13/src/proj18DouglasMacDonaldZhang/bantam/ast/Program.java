@@ -51,8 +51,8 @@ public class Program extends ASTNode {
      * @param lineNum   source line number corresponding to this AST node
      * @param classList list of class declarations
      */
-    public Program(int lineNum, ClassList classList, String comments, boolean hasParens, String eofComments) {
-        super(lineNum, comments, hasParens);
+    public Program(int lineNum, ClassList classList, String comments, String eofComments) {
+        super(lineNum, comments);
         this.classList = classList;
         this.endComments = eofComments;
     }

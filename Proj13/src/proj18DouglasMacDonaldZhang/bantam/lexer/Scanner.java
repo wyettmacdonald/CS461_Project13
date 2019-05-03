@@ -59,12 +59,14 @@ public class Scanner
         errorHandler = handler;
         currentChar = ' ';
         sourceFile = new SourceFile(filename);
+        whitespace = "";
     }
 
     public Scanner(Reader reader, ErrorHandler handler) {
         errorHandler = handler;
         currentChar = ' ';
         sourceFile = new SourceFile(reader);
+        whitespace = "";
     }
 
     void setSource(SourceFile source) {

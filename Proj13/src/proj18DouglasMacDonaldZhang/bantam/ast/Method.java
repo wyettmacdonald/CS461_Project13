@@ -69,8 +69,8 @@ public class Method extends Member {
      */
     public Method(int lineNum, String returnType, String name,
                   FormalList formalList, StmtList stmtList,
-                  String comments, boolean hasParens) {
-        super(lineNum, comments, hasParens);
+                  String comments) {
+        super(lineNum, comments);
         this.returnType = returnType;
         this.name = name;
         this.formalList = formalList;

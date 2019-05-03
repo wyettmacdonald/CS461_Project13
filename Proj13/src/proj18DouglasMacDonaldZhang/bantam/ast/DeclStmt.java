@@ -62,8 +62,8 @@ public class DeclStmt extends Stmt {
      * @param init    the (non-optional) initialization expression for the declared variable
      */
     public DeclStmt(int lineNum, String name, Expr init,
-                    String comments, boolean hasParens) {
-        super(lineNum, comments, hasParens);
+                    String comments) {
+        super(lineNum, comments);
         this.type = null;
         this.name = name;
         this.init = init;

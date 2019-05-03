@@ -57,8 +57,8 @@ public abstract class ListNode extends ASTNode
      * @param lineNum source line number corresponding to this AST node
      */
     protected ListNode(int lineNum) {
-        //The comments get associated with the first item in it, not the list, and I don't think you can have parens around list TODO verify
-        super(lineNum, "", false);
+        //The comments get associated with the first item in it, not the list TODO verify
+        super(lineNum, "");
         listElements = new Vector<ASTNode>();
     }
 
