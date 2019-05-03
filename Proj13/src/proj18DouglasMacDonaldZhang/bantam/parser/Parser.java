@@ -175,7 +175,9 @@ public class Parser
     */
     private String reformat(String comments, boolean isString){
         if(comments.length() > 80){
-            boolean isSingleLine = comments.trim().substring(0, 2) == "\\";
+            System.out.println("Start off as " + comments);
+            boolean isSingleLine = "//".equals(comments.trim().substring(0, 2));
+            //System.out.println(comments.trim().substring(0, 2) + " // " + "//".equals(comments.trim().substring(0, 2)));
             String reformattedComments = "";
             String shorterLine = "";
             String[] words = comments.split(" ");
@@ -576,7 +578,7 @@ public class Parser
         int position = currentToken.position;
         Expr left;
         if(currentToken.kind == INTCONST){
-            System.out.println("Cur token is IntConstant and has parens is " + hasParens);
+            //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
         }
 
         left = parseAndExpr();
@@ -597,7 +599,7 @@ public class Parser
         String beginningComments = beginNewComments();
 
         if(currentToken.kind == INTCONST){
-            System.out.println("Cur token is IntConstant and has parens is " + hasParens);
+            //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
         }
 
         int position = currentToken.position;
@@ -620,7 +622,7 @@ public class Parser
         int position = currentToken.position;
 
         if(currentToken.kind == INTCONST){
-            System.out.println("Cur token is IntConstant and has parens is " + hasParens);
+            //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
         }
 
         Expr left = parseRelationalExpr();
@@ -651,7 +653,7 @@ public class Parser
         String beginningComments = beginNewComments();
 
         if(currentToken.kind == INTCONST){
-            System.out.println("Cur token is IntConstant and has parens is " + hasParens);
+            //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
         }
 
         left = parseAddExpr();
@@ -689,7 +691,7 @@ public class Parser
         String beginningComments = beginNewComments();
 
         if(currentToken.kind == INTCONST){
-            System.out.println("Cur token is IntConstant and has parens is " + hasParens);
+            //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
         }
 
         Expr left = parseMultExpr();
@@ -721,7 +723,7 @@ public class Parser
         Expr left, right;
 
         if(currentToken.kind == INTCONST){
-            System.out.println("Cur token is IntConstant and has parens is " + hasParens);
+            //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
         }
 
         String beginningComments = beginNewComments();
@@ -755,7 +757,7 @@ public class Parser
         Expr result;
 
         if(currentToken.kind == INTCONST){
-            System.out.println("Cur token is IntConstant and has parens is " + hasParens);
+            //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
         }
 
         switch (currentToken.kind) {
@@ -822,7 +824,7 @@ public class Parser
         Token.Kind kind = currentToken.kind;
 
         if(currentToken.kind == INTCONST){
-            System.out.println("Cur token is IntConstant and has parens is " + hasParens);
+            //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
         }
 
         String beginningComments = beginNewComments();
@@ -859,7 +861,7 @@ public class Parser
         int position = currentToken.position;
 
         if(currentToken.kind == INTCONST){
-            System.out.println("Cur token is IntConstant and has parens is " + hasParens);
+            //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
         }
 
         String beginningComments = beginNewComments();
@@ -867,7 +869,7 @@ public class Parser
         unary = parsePrimary();
 
 
-        System.out.println("Cur token is after unaryPostfix and has parens is " + hasParens);
+        //System.out.println("Cur token is after unaryPostfix and has parens is " + hasParens);
 
         if (currentToken.kind == UNARYINCR) {
             unary = new UnaryIncrExpr(position, unary, true, beginningComments, hasParens);
