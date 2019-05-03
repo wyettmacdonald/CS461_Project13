@@ -158,7 +158,9 @@ public class Parser
         String[] oldCommentsByLine = oldComments.split("\n");
         String reformattedComments = "";
         for(int i = 0; i < oldCommentsByLine.length; i++){
-            reformattedComments += reformat(oldCommentsByLine[i], false) + "\n";
+            if(oldCommentsByLine[i].length() > 0){
+                reformattedComments += reformat(oldCommentsByLine[i], false) + "\n";
+            }
             //TODO figure out a way not to add a new line to an end of file comment
             //if(reformattedComments.length() > 0) System.out.println("Reformed version is " +  reformatComments(oldCommentsByLine[i]) + " a");
         }
@@ -179,36 +181,43 @@ public class Parser
             for(int i = 0; i < words.length; i++) {
                 //If the word is 80+ chars long, give up on nice splitting and split it every 80 chars
                 if(words[i].length() > 80){
-                    String longWord = words[i]; //I don't want to fiddle with the word inside the array directly
-                    while(longWord.length() > 80) {
-                        String first80 = longWord.substring(0, 81);
-                        reformattedComments += first80;
-                        if(isString){
-                            reformattedComments += "\" + \n\""; //Close the string, move onto a new line, begin new quote
-                        }
-                        else{
-                            reformattedComments += "\n";
-                        }
-                        longWord = longWord.substring(81);
-                    }
-                    //Add the remnants of the long word to reformatted comments
-                    reformattedComments += longWord + "\n";
-                }
-                //Else, add words to a line until just before it hits 80 chars per line
-                else if (shorterLine.length() + words[i].length() < 80){
-                    shorterLine += words[i];
-                }
-                else{
-                    reformattedComments += shorterLine;
-                    if(isString){
-                        reformattedComments += "\" + \n\""; //Close the string, move onto a new line, begin new quote
-                    }
-                    else{
-                        reformattedComments += "\n";
+                    //Add whatever's previously been stored to the line before handling the stupidly long word
+                    if(shorterLine.length() > 0){ //Test to avoid adding a new line char if this is empty
+                        reformattedComments = handleCommentOrStringEnding(isString, reformattedComments, shorterLine);
                     }
                     shorterLine = "";
+
+                    String longWord = words[i];
+                    while(longWord.length() > 80) {
+                        String first80 = longWord.substring(0, 81);
+                        reformattedComments = handleCommentOrStringEnding(isString, reformattedComments, first80);
+                        longWord = longWord.substring(81);
+                    }
+                    if(i < words.length -1) {
+                        reformattedComments = handleCommentOrStringEnding(isString, reformattedComments, longWord);
+                    }
+                    else{
+                        reformattedComments += longWord;
+                    }
+                }
+                //Else, add words to a line until just before it hits 80 chars per line
+                else {
+                    if (shorterLine.length() + words[i].length() < 80){
+                        shorterLine += words[i];
+                        if(i < words.length-1){
+                            shorterLine += " ";
+                        }
+                    }
+                    else{
+                        reformattedComments = handleCommentOrStringEnding(isString, reformattedComments, shorterLine);
+                        shorterLine = words[i]; //Pick up the next line where you left off
+                        if(i < words.length-1){
+                            shorterLine += " ";
+                        }
+                    }
                 }
             }
+            reformattedComments += shorterLine; //Tack on any remnants
             System.out.println("Reformatted string is "+ reformattedComments);
             return reformattedComments;
         }
@@ -216,6 +225,19 @@ public class Parser
             //System.out.println("String is " + string);
             return comments;
         }
+    }
+
+    /*
+    *TODO fill out
+    */
+    private String handleCommentOrStringEnding(boolean isString, String curString, String restOfLine){
+        if(isString){
+            curString += restOfLine + "\" + \n\""; //Close the string, move onto a new line, begin new quote
+        }
+        else{
+            curString += restOfLine + "\n";
+        }
+        return curString;
     }
 
 

@@ -48,8 +48,11 @@ class Main extends Parent{
 			var citron = "Doodoo";
 			citron = "Baby Shark";
 		}
-
+			
 		
+		meh = "Very nice";
+		
+		super.god();
 		(super.god()) ; //Legal
 		(super).god() ; //Legal
 		//Parens around the second half the expression aren't legal

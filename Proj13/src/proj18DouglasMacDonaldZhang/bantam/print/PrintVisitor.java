@@ -208,7 +208,7 @@ public class PrintVisitor extends Visitor {
         if(stmt != null) {
             printString += getTab() + "else {\n";
             addTab();
-            node.getElseStmt().accept(this);
+            stmt.accept(this);
             curTab.pop();
             printString += "\n" + getTab() + "}";
         }

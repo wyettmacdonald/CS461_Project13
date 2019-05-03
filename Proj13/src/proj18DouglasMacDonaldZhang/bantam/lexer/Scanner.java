@@ -131,8 +131,15 @@ public class Scanner
      */
     private Token.Kind scanComment() {
         //Save the whitespace preceding if it's a comment
-        currentTokenSpelling = currentTokenSpelling.insert(0, whitespace);
+       // System.out.println("curComment Before" + currentTokenSpelling);
+        if(whitespace.length() > 0 && whitespace.trim().equals("")) { //Make sure it's only white space
+            System.out.println("Whitespace " + whitespace + " " + whitespace.length());
+            //It turns out on the first comment, whitespace is somehow mysteriously getting "null "? Hardcoding a fix for now
+            //TODO figure out where the "null " is coming from
+            currentTokenSpelling = currentTokenSpelling.insert(0, whitespace);
+        }
         whitespace = "";
+        //System.out.println("curComment After" + currentTokenSpelling);
         if (currentChar == '/') { // line comment
             while (currentChar != '\n' && currentChar != SourceFile.eof)
                 takeIt();
@@ -150,6 +157,7 @@ public class Scanner
                 takeIt();
             }
             takeIt();  //TODO determine if this can be removed
+            //System.out.println("curComment " + currentTokenSpelling);
             //Tia addition: record all white space after a multiline
             while (isWhite(currentChar)) {
                 takeIt();

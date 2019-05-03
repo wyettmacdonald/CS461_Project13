@@ -18,6 +18,13 @@ class Main{ // Comment
 	// another
 	//Da Bao
     boolean bool = false;
+    String thing = "Loremipsumdolorsitamet,consecteturadipiscingelit.Inegestasantenonmassaeuismod,aefficiturmassaeleifend.Pellentesquevitaeultriciesurna.Aeneannecsodalesleo.Vivamuspulvinarauguequisnislvariusdapibus.Prointemporiaculisefficitur.Namsedduifaucibus,maximusnislid,venenatisarcu.Praesenttinciduntsitamettortornonconsequat.Phasellusutodioneclacusmolestievestibulum.Doneccursuselitutsempersagittis.Morbiquamlorem,pharetrasedsuscipiteu,pretiumquismetus.Integeregetdapibussem,infringillamagna.Inullamcorpergravidavelitegetmattis.Donec.";	
+    String stringthing = "Booya! Loremipsumdolorsitamet,consecteturadipiscingelit.Inegestasantenonmassaeuismod,aefficiturmassaeleifend.Pellentesquevitaeultriciesurna.Aeneannecsodalesleo.Vivamuspulvinarauguequisnislvariusdapibus.Prointemporiaculisefficitur.Namsedduifaucibus,maximusnislid,venenatisarcu.Praesenttinciduntsitamettortornonconsequat.Phasellusutodioneclacusmolestievestibulum.Doneccursuselitutsempersagittis.Morbiquamlorem,pharetrasedsuscipiteu,pretiumquismetus.Integeregetdapibussem,infringillamagna.Inullamcorpergravidavelitegetmattis.Donec.";	
+    String ringthing = "Loremipsumdolorsitamet,consecteturadipiscingelit.Inegestasantenonmassaeuismod,aefficiturmassaeleifend.Pellentesquevitaeultriciesurna.Aeneannecsodalesleo.Vivamuspulvinarauguequisnislvariusdapibus.Prointemporiaculisefficitur.Namsedduifaucibus,maximusnislid,venenatisarcu.Praesenttinciduntsitamettortornonconsequat.Phasellusutodioneclacusmolestievestibulum.Doneccursuselitutsempersagittis.Morbiquamlorem,pharetrasedsuscipiteu,pretiumquismetus.Integeregetdapibussem,infringillamagna.Inullamcorpergravidavelitegetmattis.Donec. Mwahaha";	
+    String blingthing = "Booya! Loremipsumdolorsitamet,consecteturadipiscingelit.Inegestasantenonmassaeuismod,aefficiturmassaeleifend.Pellentesquevitaeultriciesurna.Aeneannecsodalesleo.Vivamuspulvinarauguequisnislvariusdapibus.Prointemporiaculisefficitur.Namsedduifaucibus,maximusnislid,venenatisarcu.Praesenttinciduntsitamettortornonconsequat.Phasellusutodioneclacusmolestievestibulum.Doneccursuselitutsempersagittis.Morbiquamlorem,pharetrasedsuscipiteu,pretiumquismetus.Integeregetdapibussem,infringillamagna.Inullamcorpergravidavelitegetmattis.Donec. Mwahaha";	
+    				
+
+
 	// comment before method
     void blah(int b) {
 
@@ -28,7 +35,7 @@ class Main{ // Comment
 
         while((i < 10) && (i > 20)) {
         	i++;
-        	var citron = "Doodoo";
+        	var citron = "Doodoo"; //You can't add tabs because it'll screw up inline comments
         	citron = "Baby Shark";
         }
 
@@ -37,6 +44,9 @@ class Main{ // Comment
     }
 
 	void main(){
+		/*
+		Scientific Detective Monthly was a pulp magazine published by Hugo Gernsback, first appearing in January 1930. It was intended to focus on detective and mystery stories with a scientific element, but there were also one or two science fiction stories in every issue. The title was changed to Amazing Detective Tales with the June 1930 issue, perhaps to avoid the word "scientific", which may have given readers the impression of "a sort of scientific periodical", in Gernsback's words, rather than a magazine intended to entertain. At the same time, the editor—Hector Grey—was replaced by David Lasser, who was already editing Gernsback's other science fiction magazines. The title change apparently did not make the magazine a success, and Gernsback closed it down in October after releasing 10 issues. He sold the title to publisher Wallace Bamber, who produced at least five more issues in 1931 under the title Amazing Detective Stories.
+		*/
 	}
 }
 
