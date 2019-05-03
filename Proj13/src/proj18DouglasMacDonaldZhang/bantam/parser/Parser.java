@@ -235,7 +235,7 @@ public class Parser
             curString += restOfLine + "\" + \n\""; //Close the string, move onto a new line, begin new quote
         }
         else{
-            curString += restOfLine + "\n";
+            curString += restOfLine + "\n//"; //In case of an overly long one-liner
         }
         return curString;
     }
