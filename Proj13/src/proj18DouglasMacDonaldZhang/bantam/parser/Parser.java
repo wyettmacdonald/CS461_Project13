@@ -174,6 +174,7 @@ public class Parser
     */
     private String reformat(String comments, boolean isString){
         if(comments.length() > 80){
+            boolean isSingleLine = comments.trim().substring(0, 2) == "\\";
             String reformattedComments = "";
             String shorterLine = "";
             String[] words = comments.split(" ");
@@ -183,18 +184,18 @@ public class Parser
                 if(words[i].length() > 80){
                     //Add whatever's previously been stored to the line before handling the stupidly long word
                     if(shorterLine.length() > 0){ //Test to avoid adding a new line char if this is empty
-                        reformattedComments = handleCommentOrStringEnding(isString, reformattedComments, shorterLine);
+                        reformattedComments = handleCommentOrStringEnding(isString, isSingleLine, reformattedComments, shorterLine);
                     }
                     shorterLine = "";
 
                     String longWord = words[i];
                     while(longWord.length() > 80) {
                         String first80 = longWord.substring(0, 81);
-                        reformattedComments = handleCommentOrStringEnding(isString, reformattedComments, first80);
+                        reformattedComments = handleCommentOrStringEnding(isString, isSingleLine, reformattedComments, first80);
                         longWord = longWord.substring(81);
                     }
                     if(i < words.length -1) {
-                        reformattedComments = handleCommentOrStringEnding(isString, reformattedComments, longWord);
+                        reformattedComments = handleCommentOrStringEnding(isString, isSingleLine, reformattedComments, longWord);
                     }
                     else{
                         reformattedComments += longWord;
@@ -209,7 +210,7 @@ public class Parser
                         }
                     }
                     else{
-                        reformattedComments = handleCommentOrStringEnding(isString, reformattedComments, shorterLine);
+                        reformattedComments = handleCommentOrStringEnding(isString, isSingleLine, reformattedComments, shorterLine);
                         shorterLine = words[i]; //Pick up the next line where you left off
                         if(i < words.length-1){
                             shorterLine += " ";
@@ -230,12 +231,15 @@ public class Parser
     /*
     *TODO fill out
     */
-    private String handleCommentOrStringEnding(boolean isString, String curString, String restOfLine){
+    private String handleCommentOrStringEnding(boolean isString, boolean isSingleLine, String curString, String restOfLine){
         if(isString){
             curString += restOfLine + "\" + \n\""; //Close the string, move onto a new line, begin new quote
         }
         else{
-            curString += restOfLine + "\n//"; //In case of an overly long one-liner
+            curString += restOfLine + "\n";
+            if(isSingleLine){
+                curString += "//"; //In case of an overly long one-liner
+            }
         }
         return curString;
     }
@@ -274,7 +278,7 @@ public class Parser
         advanceIfMatches(RCURLY);
 
         aClass = new Class_(position, scanner.getFilename(), className.spelling,
-                parentName, memberList, beginningComments, false);
+                parentName, memberList, beginningComments);
         return aClass;
     }
 
@@ -387,7 +391,7 @@ public class Parser
         }
         advanceIfMatches(SEMICOLON);
 
-        return new ReturnStmt(position, expr, beginningComments, false);
+        return new ReturnStmt(position, expr, beginningComments);
     }
 
 
@@ -407,7 +411,7 @@ public class Parser
         int position = currentToken.position;
         Expr expr = parseExpression();
         advanceIfMatches(SEMICOLON);
-        return new ExprStmt(position, expr, beginningComments, false);
+        return new ExprStmt(position, expr, beginningComments);
     }
 
 
@@ -465,7 +469,7 @@ public class Parser
 
         execute = parseStatement();
 
-        return new ForStmt(position, start, terminate, increment, execute, beginningComments, false);
+        return new ForStmt(position, start, terminate, increment, execute, beginningComments);
     }
 
 
@@ -507,7 +511,7 @@ public class Parser
             elseStmt = parseStatement();
         }
 
-        return new IfStmt(position, condition, thenStmt, elseStmt, beginningComments, false);
+        return new IfStmt(position, condition, thenStmt, elseStmt, beginningComments);
     }
 
 
@@ -881,7 +885,7 @@ public class Parser
                 break;
             default:
                 String id = parseIdentifier();
-                primary = new VarExpr(currentToken.position, null, id, beginningComments, false);
+                primary = new VarExpr(currentToken.position, null, id, beginningComments, hasParens);
         }
         // now add the suffixes
         while (    currentToken.kind == DOT
@@ -960,7 +964,7 @@ public class Parser
     //<Formal> ::= <Type> <Identifier>
     private Formal parseFormal() {
         String beginningComments = beginNewComments(); //Gotta get comments before the identifiers and such are parsed
-        return new Formal(currentToken.position, parseType(), parseIdentifier(), beginningComments, false);
+        return new Formal(currentToken.position, parseType(), parseIdentifier(), beginningComments);
     }
 
 

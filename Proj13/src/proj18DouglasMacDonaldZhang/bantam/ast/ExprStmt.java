@@ -50,8 +50,8 @@ public class ExprStmt extends Stmt {
      * @param expr    the expression within the statement
      */
     public ExprStmt(int lineNum, Expr expr,
-                    String comments, boolean hasParens) {
-        super(lineNum, comments, hasParens);
+                    String comments) {
+        super(lineNum, comments);
         this.expr = expr;
     }
 

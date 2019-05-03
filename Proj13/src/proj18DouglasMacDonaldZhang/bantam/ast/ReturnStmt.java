@@ -50,8 +50,8 @@ public class ReturnStmt extends Stmt {
      * @param expr    expression to be returned (null for no return expression)
      */
     public ReturnStmt(int lineNum, Expr expr,
-                      String comments, boolean hasParens) {
-        super(lineNum, comments, hasParens);
+                      String comments) {
+        super(lineNum, comments);
         this.expr = expr;
     }
 

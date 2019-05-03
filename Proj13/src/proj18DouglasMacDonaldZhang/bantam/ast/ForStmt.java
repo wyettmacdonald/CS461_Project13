@@ -71,8 +71,8 @@ public class ForStmt extends Stmt {
      */
     public ForStmt(int lineNum, Expr initExpr, Expr predExpr,
                    Expr updateExpr, Stmt bodyStmt,
-                   String comments, boolean hasParens) {
-        super(lineNum, comments, hasParens);
+                   String comments) {
+        super(lineNum, comments);
         this.initExpr = initExpr;
         this.predExpr = predExpr;
         this.updateExpr = updateExpr;
