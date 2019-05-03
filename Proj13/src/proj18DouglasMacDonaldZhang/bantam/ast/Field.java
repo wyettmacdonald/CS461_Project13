@@ -101,7 +101,7 @@ public class Field extends Member {
      * @return string of comments
      */
     public String getComments() {
-        return comments + "\n";
+        return comments;
     }
 
     /**

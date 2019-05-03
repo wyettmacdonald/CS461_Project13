@@ -49,6 +49,10 @@ public class ConstStringExpr extends ConstExpr {
         super(lineNum, constant, comments, hasParens);
     }
 
+    public String toString() {
+        return "\"" + constant + "\"";
+    }
+
 
     /**
      * Visitor method

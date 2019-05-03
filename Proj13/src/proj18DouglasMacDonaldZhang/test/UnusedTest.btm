@@ -10,7 +10,8 @@
 class Main extends Parent{
 	String meh;
 
-	void blah(){
+	void blah()
+	{
 		// another comment
 		var arg = (0); //Permitted
 		//(var) arg = 0; and (var arg) = 0; don't parse
@@ -18,13 +19,12 @@ class Main extends Parent{
 		var i = 0;
 		var arr = (new int[10]); //Allowed
 
-		if( (meh instanceof String) ) {
+		if( (meh instanceof String) ) 
+		{
 			var juju  = "meh";
 			arr = (int[1]);
 			//(return); banned
-			(i++);
-			(i/10);
-			(!true);
+			i++;			
 			juju = (meh);
 		}
 

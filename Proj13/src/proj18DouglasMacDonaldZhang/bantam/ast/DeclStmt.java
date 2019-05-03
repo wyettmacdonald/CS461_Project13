@@ -113,9 +113,9 @@ public class DeclStmt extends Stmt {
      */
     public String toString() {
         if(init != null) {
-            return "var" + " " + name + " = " + init.toString() + ";";
+            return "var " + name + " = ";
         }
-        return "var" + " " + name + ";\n";
+        return "var " + name + ";\n";
     }
 
     /**

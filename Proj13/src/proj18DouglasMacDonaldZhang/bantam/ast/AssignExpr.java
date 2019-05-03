@@ -107,7 +107,7 @@ public class AssignExpr extends Expr {
         if(refName != null){
             arrAssignStr += refName + ".";
         }
-        arrAssignStr += name + " = " + expr.toString();
+        arrAssignStr += name + " = ";
         return arrAssignStr;
     }
 

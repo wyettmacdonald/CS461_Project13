@@ -107,9 +107,12 @@ public class ArrayExpr extends Expr {
     public String toString(){
         String arrAssignStr = "";
         if(ref != null){
-            arrAssignStr += ref.toString() + ".";
+            arrAssignStr += ref.toString();
         }
-        arrAssignStr += name + "[" + index +"]";
+        if(name != null) {
+            arrAssignStr += "." + name;
+        }
+        arrAssignStr += "[" + index +"]";
         return arrAssignStr;
     }
 
