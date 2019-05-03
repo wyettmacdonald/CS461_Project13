@@ -113,7 +113,7 @@ public class Field extends Member {
         if(init != null) {
             return type + " " + name + " = ";
         }
-        return type + " " + name + ";\n";
+        return type + " " + name + ";";
     }
 
     /**

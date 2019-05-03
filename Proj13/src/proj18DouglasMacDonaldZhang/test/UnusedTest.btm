@@ -11,6 +11,7 @@ class Main extends Parent{
 	String meh;
 
 	void blah(){
+		// another comment
 		var arg = (0); //Permitted
 		//(var) arg = 0; and (var arg) = 0; don't parse
 		meh = ("nice one");

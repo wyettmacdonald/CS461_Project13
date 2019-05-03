@@ -66,6 +66,13 @@ public abstract class BinaryExpr extends Expr {
         this.rightExpr = rightExpr;
     }
 
+    public String toString() {
+        if(hasParens()) {
+            return "( " + getLeftExpr() + getOpName() + getRightExpr() + " )";
+        }
+        return getLeftExpr() + getOpName() + getRightExpr();
+    }
+
     /**
      * Get the lefthand expression
      *

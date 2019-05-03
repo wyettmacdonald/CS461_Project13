@@ -93,11 +93,11 @@ public class PrintVisitor extends Visitor {
 //        curTab.pop();
 //        printString += getTab() + "}\n";
         printString += getTab() + node.getComments();
-        printString += getTab() + node.toString();
+        printString += "\n" + getTab() + node.toString();
         addTab();
         node.getMemberList().accept(this);
         curTab.pop();
-        printString += getTab() + "}\n";
+        printString += "\n" + getTab() + "}";
         return null;
     }
 
@@ -119,10 +119,10 @@ public class PrintVisitor extends Visitor {
 //        printString += ";\n";
         Expr expr = node.getInit();
         printString += getTab() + node.getComments();
-        printString += getTab() + node.toString();
+        printString += "\n" + getTab() + node.toString();
         if(expr != null) {
             expr.accept(this);
-            printString += ";\n";
+            printString += ";";
         }
         return null;
     }
@@ -148,13 +148,13 @@ public class PrintVisitor extends Visitor {
 //        curTab.pop();
 //        printString += getTab() + "}\n\n";
         printString += getTab() + node.getComments();
-        printString += getTab() + node.toString();
+        printString += "\n" + getTab() + node.toString();
         node.getFormalList().accept(this);
         printString += ") {\n";
         addTab();
         node.getStmtList().accept(this);
         curTab.pop();
-        printString += getTab() + "}\n\n";
+        printString += "\n" + getTab() + "}";
         return null;
     }
 
@@ -180,11 +180,12 @@ public class PrintVisitor extends Visitor {
     public Object visit(DeclStmt node) {
 //        String type = node.getType();
 //        String name = node.getName();
-        printString += getTab() + node.toString();
+
+        printString += "\n" + getTab() + node.toString();
         Expr initExpr = node.getInit();
         if (initExpr != null) {
             initExpr.accept(this);
-            printString += ";\n";
+            printString += ";";
         }
         return null;
     }
@@ -196,20 +197,20 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(IfStmt node) {
-        printString += getTab() + node.toString();
+        printString += "\n" + getTab() + "if( ";
         node.getPredExpr().accept(this);
         printString += ") {\n";
         addTab();
         node.getThenStmt().accept(this);
         curTab.pop();
-        printString += getTab() + "}\n";
+        printString += "\n" + getTab() + "}";
         Stmt stmt = node.getElseStmt();
         if(stmt != null) {
             printString += getTab() + "else {\n";
             addTab();
             node.getElseStmt().accept(this);
             curTab.pop();
-            printString += getTab() + "}\n\n";
+            printString += "\n" + getTab() + "}";
         }
         return null;
     }
@@ -221,13 +222,13 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(WhileStmt node) {
-        printString += getTab() + "while(";
+        printString += "\n" + getTab() + "while(";
         node.getPredExpr().accept(this);
         printString += ") {\n";
         addTab();
         node.getBodyStmt().accept(this);
         curTab.pop();
-        printString += getTab() + "}\n\n";
+        printString += "\n" + getTab() + "}";
         return null;
     }
 
@@ -238,7 +239,7 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(ForStmt node) {
-        printString += getTab() + "for(";
+        printString += "\n" + getTab() + "for(";
         inForLoop = true;
         node.getInitExpr().accept(this);
         printString += "; ";
@@ -250,7 +251,7 @@ public class PrintVisitor extends Visitor {
         addTab();
         node.getBodyStmt().accept(this);
         curTab.pop();
-        printString += getTab() + "}\n\n";
+        printString += "\n" + getTab() + "}";
         return null;
     }
 
@@ -261,8 +262,7 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(BreakStmt node) {
-        printString += getTab() + "break;";
-        curTab.pop();
+        printString += "\n" + getTab() + "break;";
         return null;
     }
 
@@ -285,11 +285,11 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(ReturnStmt node) {
         Expr expr = node.getExpr();
-        printString += getTab() + "return";
+        printString += "\n" + getTab() + "return";
         if(expr != null) {
             node.getExpr().accept(this);
         }
-        printString += ";\n";
+        printString += ";";
         return null;
     }
 
@@ -302,14 +302,14 @@ public class PrintVisitor extends Visitor {
     public Object visit(DispatchExpr node) {
         String name = node.getMethodName();
         Expr expr = node.getRefExpr();
-        printString += getTab();
+        printString += "\n" + getTab();
         if(expr != null) {
             expr.accept(this);
             printString += ".";
         }
         printString += name + "(";
         node.getActualList().accept(this);
-        printString += ");\n";
+        printString += ");";
         return null;
     }
 
@@ -390,13 +390,14 @@ public class PrintVisitor extends Visitor {
     public Object visit(AssignExpr node) {
         String varName = node.getName();
         String refName = node.getRefName();
-        printString += getTab();
+        printString += node.getComments();
+        printString += "\n" + getTab();
         if(refName != null) {
             printString += refName + ".";
         }
         printString += varName + " = ";
         node.getExpr().accept(this);
-        printString += ";\n";
+        printString += ";";
         return null;
     }
 
@@ -483,6 +484,7 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(BinaryCompLtExpr node) {
         visitBinary(node, node.getOpName());
+//        printString += node.toString();
         return null;
     }
 
@@ -494,6 +496,7 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(BinaryCompLeqExpr node) {
         visitBinary(node, node.getOpName());
+//        printString += node.toString();
         return null;
     }
 
@@ -592,7 +595,8 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(BinaryLogicOrExpr node) {
-        visitBinary(node, node.getOpName());
+//        visitBinary(node, node.getOpName());
+        printString += node.toString();
         return null;
     }
 
@@ -636,9 +640,9 @@ public class PrintVisitor extends Visitor {
                 printString += name;
             }
             else {
-                printString += getTab();
+                printString += "\n" + getTab();
                 node.getExpr().accept(this);
-                printString += name + ";\n";
+                printString += name + ";";
             }
         }
         else {
@@ -647,10 +651,10 @@ public class PrintVisitor extends Visitor {
                 node.getExpr().accept(this);
             }
             else {
-                printString += getTab();
+                printString += "\n" + getTab();
                 printString += name;
                 node.getExpr().accept(this);
-                printString += ";\n";
+                printString += ";";
             }
         }
         return null;
@@ -670,9 +674,9 @@ public class PrintVisitor extends Visitor {
                 printString += name;
             }
             else {
-                printString += getTab();
+                printString += "\n" + getTab();
                 node.getExpr().accept(this);
-                printString += name + ";\n";
+                printString += name + ";";
             }
         }
         else {
@@ -681,10 +685,10 @@ public class PrintVisitor extends Visitor {
                 node.getExpr().accept(this);
             }
             else {
-                printString += getTab();
+                printString += "\n" + getTab();
                 printString += name;
                 node.getExpr().accept(this);
-                printString += ";\n";
+                printString += ";";
             }
         }
         return null;

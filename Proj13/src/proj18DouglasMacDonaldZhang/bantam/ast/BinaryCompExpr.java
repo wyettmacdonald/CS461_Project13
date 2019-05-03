@@ -53,6 +53,13 @@ public abstract class BinaryCompExpr extends BinaryExpr {
 
     }
 
+    public String toString() {
+        if(hasParens()) {
+            return "( " + getLeftExpr() + getOpName() + getRightExpr()+  " )";
+        }
+        return getLeftExpr() + getOpName() + getRightExpr();
+    }
+
     /**
      * Visitor method
      *

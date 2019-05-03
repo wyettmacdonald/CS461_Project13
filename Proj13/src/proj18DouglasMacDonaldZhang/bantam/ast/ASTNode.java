@@ -272,6 +272,10 @@ public abstract class ASTNode {
         this.parentheses = hasParens;
     }
 
+    public boolean hasParens() {
+        return parentheses;
+    }
+
     /**
      * Get the line number corresponding to this AST node
      *
