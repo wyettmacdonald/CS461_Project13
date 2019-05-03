@@ -8,12 +8,15 @@
 A class
 */
 // a class
-class Main{ // a class
+class Main{ // Comment
+	//Choo choo
 	// a comment to come through
     int x; // another comment
+	//Juju, Xiao Mei
 	// comment 3
     String y;
-	// another comment
+	// another
+	//Da Bao
     boolean bool = false;
 	// comment before method
     void blah(int b) {
@@ -41,3 +44,5 @@ class Parent {
     String newString = "hello";
 
 }
+
+//I'm an end comment!

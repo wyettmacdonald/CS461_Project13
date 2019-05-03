@@ -4,6 +4,9 @@
 * Test file for finding unused (and a bit for finding uses)
 */
 
+
+
+
 class Main extends Parent{
 	String meh;
 

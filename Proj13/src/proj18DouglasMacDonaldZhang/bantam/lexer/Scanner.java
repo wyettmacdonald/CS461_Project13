@@ -46,11 +46,13 @@ public class Scanner
     private char prevChar;
     private StringBuffer currentTokenSpelling;
     private boolean currentlyScanningToken;
+    private String whitespace;
 
     public Scanner(ErrorHandler handler) {
         errorHandler = handler;
         sourceFile = null;
         currentChar = ' '; //whitespace
+        whitespace = "";
     }
 
     public Scanner(String filename, ErrorHandler handler) {
@@ -128,10 +130,13 @@ public class Scanner
      * Invoked when previous char = '/' and currentChar = '/' or '*'
      */
     private Token.Kind scanComment() {
+        //Save the whitespace preceding if it's a comment
+        currentTokenSpelling = currentTokenSpelling.insert(0, whitespace);
+        whitespace = "";
         if (currentChar == '/') { // line comment
             while (currentChar != '\n' && currentChar != SourceFile.eof)
                 takeIt();
-            takeIt(); //take the newline or eof char
+            takeIt(); //take the newline or eof char //TODO verify that this already records the new line at the end of a single line
         }
 
         else if (currentChar == '*') { // block comment
@@ -156,6 +161,7 @@ public class Scanner
 
 
     private Token.Kind scanOperator() {
+        whitespace = ""; //Tia addition
         takeIt();
         String operator = currentTokenSpelling.toString();
 
@@ -228,6 +234,7 @@ public class Scanner
      *     4) has less than 5000 characters
      */
     private Token.Kind scanString() {
+        whitespace = ""; //Tia addition
         int pos = sourceFile.getCurrentLineNumber();
         takeIt();
 
@@ -268,6 +275,7 @@ public class Scanner
      * Make sure the integer is between 0 and 2^31-1
      */
     private Token.Kind scanInteger() {
+        whitespace = ""; //Tia addition
 
         while (isDigit(currentChar)) {
             takeIt();
@@ -295,6 +303,7 @@ public class Scanner
      * 		2)is made of character, integer and underscore
      */
     private Token.Kind scanIdentifier() {
+        whitespace = ""; //Tia addition
         while ((isLetter(currentChar) || isDigit(currentChar) || currentChar == '_')) {
             takeIt();
         }
@@ -448,9 +457,12 @@ public class Scanner
 
 
     public Token scan() {
-        // skip whitespace
+        // Do not skip whitespace
         while (isWhite(currentChar)) {
-            takeIt();
+            whitespace += currentChar;
+            prevChar = currentChar;
+            currentChar = sourceFile.getNextChar();
+
         }
 
         // scan the token, saving the characters in the instance

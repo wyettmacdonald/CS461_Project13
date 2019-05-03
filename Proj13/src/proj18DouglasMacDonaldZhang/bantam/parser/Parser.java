@@ -82,7 +82,9 @@ public class Parser
 
     private void advance() {
         while((currentToken = scanner.scan()).kind == Token.Kind.COMMENT){
+
             comments += currentToken.spelling;
+            //System.out.println(currentToken.spelling);
         }
     }
 
@@ -133,6 +135,8 @@ public class Parser
     //<Program> ::= <Class> | <Class> <Program>
     private Program parseProgram() {
         String beginningComments = beginNewComments(); //Comments collected by the parse() method that called parseProgram
+        System.out.println("BEGINNING PARSING PROGRAM");
+        System.out.println("Begin: " + beginningComments);
         int position = currentToken.position;
         ClassList clist = new ClassList(position);
 
@@ -150,23 +154,27 @@ public class Parser
     */
     private String beginNewComments(){
         String oldComments = comments;
+        if(oldComments.length() > 0) System.out.println("\nToken: + " + currentToken.spelling + " - old comments are " + oldComments + "\n");
         String[] oldCommentsByLine = oldComments.split("\n");
-        String reformattedComment = "";
+        String reformattedComments = "";
         for(int i = 0; i < oldCommentsByLine.length; i++){
-            reformattedComment += reformatString(oldCommentsByLine[i]);
+            reformattedComments += reformat(oldCommentsByLine[i], false) + "\n";
+            //TODO figure out a way not to add a new line to an end of file comment
+            //if(reformattedComments.length() > 0) System.out.println("Reformed version is " +  reformatComments(oldCommentsByLine[i]) + " a");
         }
         comments = "";
-        return reformattedComment;
+        //if(reformattedComments.length() > 0) System.out.println("\nReformatted comments are " + reformattedComments + "\nDone");
+        return reformattedComments;
     }
 
     /*
     * TODO fill out
     */
-    private String reformatString(String string){
-        if(string.length() > 80){
-            String reformattedString = "";
+    private String reformat(String comments, boolean isString){
+        if(comments.length() > 80){
+            String reformattedComments = "";
             String shorterLine = "";
-            String[] words = string.split(" ");
+            String[] words = comments.split(" ");
             //Split it into words and begin a new line on the word before it reaches 80 chars
             for(int i = 0; i < words.length; i++) {
                 //If the word is 80+ chars long, give up on nice splitting and split it every 80 chars
@@ -174,34 +182,52 @@ public class Parser
                     String longWord = words[i]; //I don't want to fiddle with the word inside the array directly
                     while(longWord.length() > 80) {
                         String first80 = longWord.substring(0, 81);
-                        reformattedString += first80 + "\n";
+                        reformattedComments += first80;
+                        if(isString){
+                            reformattedComments += "\" + \n\""; //Close the string, move onto a new line, begin new quote
+                        }
+                        else{
+                            reformattedComments += "\n";
+                        }
                         longWord = longWord.substring(81);
                     }
                     //Add the remnants of the long word to reformatted comments
-                    reformattedString += longWord + "\n";
+                    reformattedComments += longWord + "\n";
                 }
                 //Else, add words to a line until just before it hits 80 chars per line
                 else if (shorterLine.length() + words[i].length() < 80){
                     shorterLine += words[i];
                 }
                 else{
-                    reformattedString += shorterLine + "\n";
+                    reformattedComments += shorterLine;
+                    if(isString){
+                        reformattedComments += "\" + \n\""; //Close the string, move onto a new line, begin new quote
+                    }
+                    else{
+                        reformattedComments += "\n";
+                    }
                     shorterLine = "";
                 }
             }
-            return reformattedString;
+            System.out.println("Reformatted string is "+ reformattedComments);
+            return reformattedComments;
         }
         else{
-            return string;
+            //System.out.println("String is " + string);
+            return comments;
         }
     }
+
+
+
+
 
     //-----------------------------
     //<Class> ::= CLASS <Identifier> <Extension> { <MemberList> }
     //<Extension> ::= EXTENDS <Identifier> | EMPTY
     //<MemberList> ::= EMPTY | <Member> <MemberList>
     private Class_ parseClass() {
-
+        String beginningComments = beginNewComments();
         Class_ aClass;
         int position = currentToken.position;
 
@@ -226,7 +252,7 @@ public class Parser
         advanceIfMatches(RCURLY);
 
         aClass = new Class_(position, scanner.getFilename(), className.spelling,
-                parentName, memberList, beginNewComments(), false);
+                parentName, memberList, beginningComments, false);
         return aClass;
     }
 
@@ -241,6 +267,7 @@ public class Parser
 
 
     private Member parseMember() {
+        String beginningComments = beginNewComments();
         Method method;
         String type = parseType();
 
@@ -254,7 +281,7 @@ public class Parser
             FormalList parameters = parseParameters();
             advanceIfMatches(RPAREN);
             stmt = (BlockStmt) parseBlock();
-            method = new Method(position, type, id, parameters, stmt.getStmtList(), beginNewComments(), false);
+            method = new Method(position, type, id, parameters, stmt.getStmtList(), beginningComments, false);
             return method;
         }
 
@@ -268,7 +295,7 @@ public class Parser
 
             advanceIfMatches(SEMICOLON);
 
-            return new Field(position, type, id, init, beginNewComments(), false);
+            return new Field(position, type, id, init, beginningComments, false);
         }
 
     }
@@ -313,6 +340,7 @@ public class Parser
     //<WhileStmt>::= WHILE ( <Expression> ) <Stmt>
     private Stmt parseWhile() {
         int position = currentToken.position;
+        String beginningComments = beginNewComments();
 
         advance(); // past "while"
         advanceIfMatches(LPAREN);
@@ -320,12 +348,13 @@ public class Parser
         advanceIfMatches(RPAREN);
         Stmt execution = parseStatement();
 
-        return new WhileStmt(position, expression, execution, beginNewComments(), false);
+        return new WhileStmt(position, expression, execution, beginningComments, false);
     }
 
 
     //<ReturnStmt>::= RETURN <Expression> ; | RETURN ;
     private Stmt parseReturn() {
+        String beginningComments = beginNewComments();
         int position = currentToken.position;
         Expr expr = null;
 
@@ -336,13 +365,14 @@ public class Parser
         }
         advanceIfMatches(SEMICOLON);
 
-        return new ReturnStmt(position, expr, beginNewComments(), false);
+        return new ReturnStmt(position, expr, beginningComments, false);
     }
 
 
     //<BreakStmt>::= BREAK ;
     private Stmt parseBreak() {
-        Stmt stmt = new BreakStmt(currentToken.position, beginNewComments(), false);
+        String beginningComments = beginNewComments();
+        Stmt stmt = new BreakStmt(currentToken.position, beginningComments, false);
         advance();
         advanceIfMatches(SEMICOLON);
         return stmt;
@@ -351,16 +381,18 @@ public class Parser
 
     //<ExpressionStmt>::= <Expression> ;
     private ExprStmt parseExpressionStmt() {
+        String beginningComments = beginNewComments();
         int position = currentToken.position;
         Expr expr = parseExpression();
         advanceIfMatches(SEMICOLON);
-        return new ExprStmt(position, expr, beginNewComments(), false);
+        return new ExprStmt(position, expr, beginningComments, false);
     }
 
 
     //<DeclStmt>::= VAR <Id> = <Expression>;
     //This makes sure that every local variable is initialized
     private Stmt parseDeclStmt() {
+        String beginningComments = beginNewComments();
 
         int position = currentToken.position;
         Stmt stmt;
@@ -370,7 +402,7 @@ public class Parser
         advanceIfMatches(ASSIGN);
         Expr value = parseExpression();
 
-        stmt = new DeclStmt(position, id, value, beginNewComments(), false);
+        stmt = new DeclStmt(position, id, value, beginningComments, false);
         advanceIfMatches(SEMICOLON);
 
         return stmt;
@@ -382,6 +414,7 @@ public class Parser
     //<Terminate>::= EMPTY | <Expression>
     //<Increment>::= EMPTY | <Expression>
     private Stmt parseFor() {
+        String beginningComments = beginNewComments();
 
         int position = currentToken.position;
         Expr start = null;
@@ -410,13 +443,14 @@ public class Parser
 
         execute = parseStatement();
 
-        return new ForStmt(position, start, terminate, increment, execute, beginNewComments(), false);
+        return new ForStmt(position, start, terminate, increment, execute, beginningComments, false);
     }
 
 
     //<BlockStmt>::=  { <Body> }
     //<Body>::= EMPTY | <Stmt> <Body>
     private Stmt parseBlock() {
+        String beginningComments = beginNewComments();
 
         int position = currentToken.position;
         StmtList stmtList = new StmtList(position);
@@ -427,12 +461,13 @@ public class Parser
         }
         advanceIfMatches(RCURLY);
 
-        return new BlockStmt(position, stmtList, beginNewComments(), false);
+        return new BlockStmt(position, stmtList, beginningComments, false);
     }
 
 
     //<IfStmt>::= IF (<Expr>) <Stmt> | IF (<Expr>) <Stmt> ELSE <Stmt>
     private Stmt parseIf() {
+        String beginningComments = beginNewComments();
 
         int position = currentToken.position;
         Expr condition;
@@ -450,7 +485,7 @@ public class Parser
             elseStmt = parseStatement();
         }
 
-        return new IfStmt(position, condition, thenStmt, elseStmt, beginNewComments(), false);
+        return new IfStmt(position, condition, thenStmt, elseStmt, beginningComments, false);
     }
 
 
@@ -464,6 +499,8 @@ public class Parser
         Expr result;
         int position = currentToken.position;
 
+        String beginningComments = beginNewComments();
+
         result = parseOrExpr();
         if (currentToken.kind == ASSIGN && result instanceof VarExpr) {
             advance();
@@ -476,7 +513,7 @@ public class Parser
             String lhsName = lhs.getName();
             String lhsRefName = (lhs.getRef() == null ? null :
                     ((VarExpr) lhs.getRef()).getName());
-            result = new AssignExpr(position, lhsRefName, lhsName, right, beginNewComments(), false);
+            result = new AssignExpr(position, lhsRefName, lhsName, right, beginningComments, false);
         }
         else if (currentToken.kind == ASSIGN && result instanceof ArrayExpr) {
             advance();
@@ -495,7 +532,7 @@ public class Parser
             String lhsRefName = (lhsExpr.getRef() == null ? null :
                     ((VarExpr) lhsExpr.getRef()).getName());
             Expr index = lhs.getIndex();
-            result = new ArrayAssignExpr(position, lhsRefName, lhsName, index, right, beginNewComments(), false);
+            result = new ArrayAssignExpr(position, lhsRefName, lhsName, index, right, beginningComments, false);
         }
 
         return result;
@@ -505,6 +542,7 @@ public class Parser
     //<LogicalOR>::= <logicalAND> <LogicalORRest>
     //<LogicalORRest>::= || <LogicalAND> <LogicalORRest> | EMPTY
     private Expr parseOrExpr() {
+        String beginningComments = beginNewComments();
         int position = currentToken.position;
         Expr left;
 
@@ -512,7 +550,7 @@ public class Parser
         while (currentToken.spelling.equals("||")) {
             advance();
             Expr right = parseAndExpr();
-            left = new BinaryLogicOrExpr(position, left, right, beginNewComments(), false);
+            left = new BinaryLogicOrExpr(position, left, right, beginningComments, false);
         }
 
         return left;
@@ -522,12 +560,13 @@ public class Parser
     //<LogicalAND>::=<ComparisonExpr> <LogicalANDRest>
     //<LogicalANDRest>::= && <ComparisonExpr> <LogicalANDRest> | EMPTY
     private Expr parseAndExpr() {
+        String beginningComments = beginNewComments();
         int position = currentToken.position;
         Expr left = parseComparisonExpr();
         while (currentToken.spelling.equals("&&")) {
             advance();
             Expr right = parseComparisonExpr();
-            left = new BinaryLogicAndExpr(position, left, right, beginNewComments(), false);
+            left = new BinaryLogicAndExpr(position, left, right, beginningComments, false);
         }
 
         return left;
@@ -540,16 +579,17 @@ public class Parser
     private Expr parseComparisonExpr() {
         int position = currentToken.position;
         Expr left = parseRelationalExpr();
+        String beginningComments = beginNewComments();
 
         if (currentToken.spelling.equals("==")) {
             advance();
             Expr right = parseRelationalExpr();
-            left = new BinaryCompEqExpr(position, left, right, beginNewComments(), false);
+            left = new BinaryCompEqExpr(position, left, right, beginningComments, false);
         }
         else if (currentToken.spelling.equals("!=")) {
             advance();
             Expr right = parseRelationalExpr();
-            left = new BinaryCompNeExpr(position, left, right, beginNewComments(), false);
+            left = new BinaryCompNeExpr(position, left, right, beginningComments, false);
         }
 
         return left;
@@ -561,29 +601,30 @@ public class Parser
     private Expr parseRelationalExpr() {
         int position = currentToken.position;
         Expr left, right;
+        String beginningComments = beginNewComments();
 
         left = parseAddExpr();
         switch (currentToken.spelling) {
             case "<":
                 advance();
                 right = parseAddExpr();
-                return new BinaryCompLtExpr(position, left, right, beginNewComments(), false);
+                return new BinaryCompLtExpr(position, left, right, beginningComments, false);
             case "<=":
                 advance();
                 right = parseAddExpr();
-                return new BinaryCompLeqExpr(position, left, right, beginNewComments(), false);
+                return new BinaryCompLeqExpr(position, left, right, beginningComments, false);
             case ">":
                 advance();
                 right = parseAddExpr();
-                return new BinaryCompGtExpr(position, left, right, beginNewComments(), false);
+                return new BinaryCompGtExpr(position, left, right, beginningComments, false);
             case ">=":
                 advance();
                 right = parseAddExpr();
-                return new BinaryCompGeqExpr(position, left, right, beginNewComments(), false);
+                return new BinaryCompGeqExpr(position, left, right, beginningComments, false);
             case "instanceof":
                 advance();
                 String type = parseType();
-                return new InstanceofExpr(position, left, type, beginNewComments(), false);
+                return new InstanceofExpr(position, left, type, beginningComments, false);
         }
 
         return left;
@@ -594,18 +635,19 @@ public class Parser
     //<MoreMult>::= + <MultExpr> <MoreMult> | - <MultiExpr> <MoreMult> | EMPTY
     private Expr parseAddExpr() {
         int position = currentToken.position;
+        String beginningComments = beginNewComments();
         Expr left = parseMultExpr();
 
         while (currentToken.kind == PLUSMINUS) {
             if (currentToken.spelling.equals("+")) {
                 advance();
                 Expr right = parseMultExpr();
-                left = new BinaryArithPlusExpr(position, left, right, beginNewComments(), false);
+                left = new BinaryArithPlusExpr(position, left, right, beginningComments, false);
             }
             else {
                 advance();
                 Expr right = parseMultExpr();
-                left = new BinaryArithMinusExpr(position, left, right, beginNewComments(), false);
+                left = new BinaryArithMinusExpr(position, left, right, beginningComments, false);
             }
         }
 
@@ -622,6 +664,7 @@ public class Parser
         int position = currentToken.position;
         Expr left, right;
 
+        String beginningComments = beginNewComments();
 
         left = parseNewCastOrUnary();
         while (currentToken.kind == MULDIV) {
@@ -629,17 +672,17 @@ public class Parser
                 case "/":
                     advance();
                     right = parseNewCastOrUnary();
-                    left = new BinaryArithDivideExpr(position, left, right, beginNewComments(), false);
+                    left = new BinaryArithDivideExpr(position, left, right, beginningComments, false);
                     break;
                 case "*":
                     advance();
                     right = parseNewCastOrUnary();
-                    left = new BinaryArithTimesExpr(position, left, right, beginNewComments(), false);
+                    left = new BinaryArithTimesExpr(position, left, right, beginningComments, false);
                     break;
                 case "%":
                     advance();
                     right = parseNewCastOrUnary();
-                    left = new BinaryArithModulusExpr(position, left, right, beginNewComments(), false);
+                    left = new BinaryArithModulusExpr(position, left, right, beginningComments, false);
                     break;
             }
         }
@@ -670,24 +713,26 @@ public class Parser
     private Expr parseNew() {
         int position = currentToken.position;
         advance();
+        String beginningComments = beginNewComments();
 
         String type = parseIdentifier();
         if (currentToken.kind == LPAREN) {
             advance();
             advanceIfMatches(RPAREN);
-            return new NewExpr(position, type, beginNewComments(), false);
+            return new NewExpr(position, type, beginningComments, false);
         }
         else {
             advanceIfMatches(LBRACKET);
             Expr sizeExpr = parseExpression();
             advanceIfMatches(RBRACKET);
-            return new NewArrayExpr(position, type, sizeExpr, beginNewComments(), false);
+            return new NewArrayExpr(position, type, sizeExpr, beginningComments, false);
         }
     }
 
 
     //<CastExpression>::= <Cast> ( <Type> , <Expression> )
     private Expr parseCast() {
+        String beginningComments = beginNewComments();
 
         Expr castExpression;
         int position = currentToken.position;
@@ -699,7 +744,7 @@ public class Parser
         Expr expression = parseExpression();
         advanceIfMatches(RPAREN);
 
-        castExpression = new CastExpr(position, type, expression, beginNewComments(), false);
+        castExpression = new CastExpr(position, type, expression, beginningComments, false);
         return castExpression;
     }
 
@@ -710,21 +755,23 @@ public class Parser
         int position = currentToken.position;
         Token.Kind kind = currentToken.kind;
 
+        String beginningComments = beginNewComments();
+
         if (currentToken.spelling.equals("-") || kind == UNARYDECR || kind == UNARYINCR || kind == UNARYNOT) {
             advance();
             Expr expr = parseUnaryPrefix();
             if (kind == PLUSMINUS) {
-                return new UnaryNegExpr(position, expr, beginNewComments(), false);
+                return new UnaryNegExpr(position, expr, beginningComments, false);
             }
             else if (kind == UNARYDECR) {
-                return new UnaryDecrExpr(position, expr, false, beginNewComments(), false);
+                return new UnaryDecrExpr(position, expr, false, beginningComments, false);
             }
             else if (kind == UNARYINCR) {
-                return new UnaryIncrExpr(position, expr, false, beginNewComments(), false);
+                return new UnaryIncrExpr(position, expr, false, beginningComments, false);
             }
             else // kind == UNARYNOT
             {
-                return new UnaryNotExpr(position, expr, beginNewComments(), false);
+                return new UnaryNotExpr(position, expr, beginningComments, false);
             }
         }
         else {
@@ -741,13 +788,15 @@ public class Parser
         Expr unary;
         int position = currentToken.position;
 
+        String beginningComments = beginNewComments();
+
         unary = parsePrimary();
         if (currentToken.kind == UNARYINCR) {
-            unary = new UnaryIncrExpr(position, unary, true, beginNewComments(), false);
+            unary = new UnaryIncrExpr(position, unary, true, beginningComments, false);
             advance();
         }
         else if (currentToken.kind == UNARYDECR) {
-            unary = new UnaryDecrExpr(position, unary, true, beginNewComments(), false);
+            unary = new UnaryDecrExpr(position, unary, true, beginningComments, false);
             advance();
         }
 
@@ -787,6 +836,8 @@ public class Parser
     private Expr parsePrimary() {
         Expr primary;
 
+        String beginningComments = beginNewComments();
+
         switch (currentToken.kind) {
             case INTCONST:
                 return parseIntConst();
@@ -806,30 +857,31 @@ public class Parser
                 break;
             default:
                 String id = parseIdentifier();
-                primary = new VarExpr(currentToken.position, null, id, beginNewComments(), false);
+                primary = new VarExpr(currentToken.position, null, id, beginningComments, false);
         }
         // now add the suffixes
         while (    currentToken.kind == DOT
                 || currentToken.kind == LPAREN && primary instanceof VarExpr
                 || currentToken.kind == LBRACKET) {
+            beginningComments = beginNewComments(); //I think technically, only in the first round of looping could this contain anything TODO verify
             if (currentToken.kind == LPAREN) {
                 advance();
                 ExprList ar = parseArguments();
                 advanceIfMatches(RPAREN);
                 VarExpr varExpr = (VarExpr) primary;
                 primary = new DispatchExpr(primary.getLineNum(), varExpr.getRef(),
-                        varExpr.getName(), ar, beginNewComments(), false);
+                        varExpr.getName(), ar, beginningComments, false);
             }
             else if (currentToken.kind == LBRACKET) {
                 advance();
                 Expr index = parseExpression();
                 advanceIfMatches(RBRACKET);
-                primary = new ArrayExpr(primary.getLineNum(), primary, null, index, beginNewComments(), false);
+                primary = new ArrayExpr(primary.getLineNum(), primary, null, index, beginningComments, false);
             }
             else { // currentToken is a DOT
                 advance();
                 String id = parseIdentifier();
-                primary = new VarExpr(currentToken.position, primary, id, beginNewComments(), false);
+                primary = new VarExpr(currentToken.position, primary, id, beginningComments, false);
             }
         }
 
@@ -883,7 +935,8 @@ public class Parser
 
     //<Formal> ::= <Type> <Identifier>
     private Formal parseFormal() {
-        return new Formal(currentToken.position, parseType(), parseIdentifier(), beginNewComments(), false);
+        String beginningComments = beginNewComments(); //Gotta get comments before the identifiers and such are parsed
+        return new Formal(currentToken.position, parseType(), parseIdentifier(), beginningComments, false);
     }
 
 
@@ -923,24 +976,30 @@ public class Parser
     private ConstStringExpr parseStringConst() {
         int position = currentToken.position;
         String spelling = currentToken.spelling;
+
+        String beginningComments = beginNewComments();
         advanceIfMatches(STRCONST);
-        return new ConstStringExpr(position, reformatString(spelling), beginNewComments(), false);
+        return new ConstStringExpr(position, reformat(spelling, true), beginningComments, false);
     }
 
 
     private ConstIntExpr parseIntConst() {
         int position = currentToken.position;
         String spelling = currentToken.spelling;
+
+        String beginningComments = beginNewComments();
         advanceIfMatches(INTCONST);
-        return new ConstIntExpr(position, spelling, beginNewComments(), false);
+        return new ConstIntExpr(position, spelling, beginningComments, false);
     }
 
 
     private ConstBooleanExpr parseBoolean() {
         int position = currentToken.position;
         String spelling = currentToken.spelling;
+
+        String beginningComments = beginNewComments();
         advanceIfMatches(BOOLEAN);
-        return new ConstBooleanExpr(position, spelling, beginNewComments(), false);
+        return new ConstBooleanExpr(position, spelling, beginningComments, false);
     }
 
 

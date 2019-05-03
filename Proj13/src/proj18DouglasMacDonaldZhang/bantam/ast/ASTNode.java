@@ -281,6 +281,9 @@ public abstract class ASTNode {
         return lineNum;
     }
 
+
+    public String getComments() {return comments;}
+
     /**
      * Visitor method
      *

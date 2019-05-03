@@ -65,6 +65,21 @@ public class PrintVisitor extends Visitor {
      * @param node the class node
      * @return result of the visit
      */
+    public Object visit(Program node) {
+        printString += node.getComments();
+        node.getClassList().accept(this);
+        printString += node.getEndComments();
+
+        return null;
+    }
+
+
+    /**
+     * Visit a class node
+     *
+     * @param node the class node
+     * @return result of the visit
+     */
     public Object visit(Class_ node) {
 //        String parent = node.getParent();
 //        // set the currentClass to this class

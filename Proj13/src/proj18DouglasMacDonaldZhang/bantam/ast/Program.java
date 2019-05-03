@@ -66,6 +66,10 @@ public class Program extends ASTNode {
         return classList;
     }
 
+    public String getEndComments(){
+        return endComments;
+    }
+
     /**
      * Visitor method
      *
