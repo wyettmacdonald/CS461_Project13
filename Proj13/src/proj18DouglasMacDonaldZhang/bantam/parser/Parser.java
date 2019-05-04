@@ -992,7 +992,8 @@ public class Parser
         while (    currentToken.kind == DOT
                 || currentToken.kind == LPAREN && primary instanceof VarExpr
                 || currentToken.kind == LBRACKET) {
-            //beginningComments = beginNewComments();
+
+
             if (currentToken.kind == LPAREN) {
                 advance();
                 ExprList ar = parseArguments();

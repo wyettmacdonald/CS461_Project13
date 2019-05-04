@@ -24,6 +24,7 @@ public class PrintVisitor extends Visitor {
     private Program ast;
     private Stack<String> curTab;
     private boolean inForLoop;
+    private boolean rightHalf; //Boolean to stop comments from printing before a node when on the right half of an expression
 
     public PrintVisitor(Program ast) {
         this.ast = ast;
@@ -33,6 +34,7 @@ public class PrintVisitor extends Visitor {
         this.inForLoop = false;
         this.printString = "";
         this.curTab = new Stack<>();
+        rightHalf = false;
         this.ast.accept(this);
         return printString;
     }
@@ -309,7 +311,9 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(DispatchExpr node) {
 //        System.out.println(node.getMethodName() + " " + parens);
-        printString += indentComments(node.getComments());
+        if(!rightHalf) {
+            printString += indentComments(node.getComments());
+        }
         String name = node.getMethodName();
         Expr expr = node.getRefExpr();
         printString += "\n" + getTab();
@@ -367,7 +371,9 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(NewExpr node) {
-        printString += indentComments(node.getComments());
+        if(!rightHalf) {
+            printString += indentComments(node.getComments());
+        }
         String type = node.getType();
         if (node.hasParens()) {
             printString += "(new " + type + "())";
@@ -384,7 +390,9 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(InstanceofExpr node) {
-        printString += indentComments(node.getComments());
+        if(!rightHalf) {
+            printString += indentComments(node.getComments());
+        }
         String type = node.getType();
         if (node.hasParens()) {
             System.out.println("getting here");
@@ -405,7 +413,9 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(CastExpr node) {
-        printString += indentComments(node.getComments());
+        if(!rightHalf) {
+            printString += indentComments(node.getComments());
+        }
         String type = node.getType();
         if (node.hasParens()) {
             printString += "(cast(" + type + ", ";
@@ -429,13 +439,17 @@ public class PrintVisitor extends Visitor {
     public Object visit(AssignExpr node) {
         String varName = node.getName();
         String refName = node.getRefName();
-        printString += indentComments(node.getComments());
+        printString += indentComments(node.getComments()) + indentComments(node.getExpr().getComments());
+
 //        printString += "\n" + getTab() + node.toString();
         printString += "\n" + getTab();
         if (refName != null) {
             printString += refName + ".";
         }
         printString += varName + " = ";
+
+        rightHalf = true;
+
         if (node.hasParens()) {
             printString += "(";
             node.getExpr().accept(this);
@@ -444,6 +458,7 @@ public class PrintVisitor extends Visitor {
             node.getExpr().accept(this);
             printString += ";";
         }
+        rightHalf = false;
         return null;
     }
 
@@ -455,8 +470,9 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(VarExpr node) {
         //check that ref.name is legit
-        System.out.println("VarEx " + node.getComments());
-        printString += indentComments(node.getComments());
+        if(!rightHalf) {
+            printString += indentComments(node.getComments());
+        }
         String varName = node.getName();
         Expr expr = node.getRef();
         if (expr != null) {
@@ -490,7 +506,9 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(NewArrayExpr node) {
-        printString += indentComments(node.getComments());
+        if(!rightHalf) {
+            printString += indentComments(node.getComments());
+        }
 //        printString += node.toString();
         if (node.hasParens()) {
             printString += " (new " + node.getType() + "[" + node.getSize().toString() + "])";
@@ -507,7 +525,9 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(ArrayExpr node) {
-        printString += indentComments(node.getComments());
+        if(!rightHalf) {
+            printString += indentComments(node.getComments());
+        }
 //        printString += node.toString();
         Expr expr = node.getRef();
         if (expr != null) {
@@ -561,7 +581,9 @@ public class PrintVisitor extends Visitor {
      * @param op Operator for the node
      */
     public void visitBinary(BinaryExpr node, String op) {
-        printString += indentComments(node.getComments());
+        if(!rightHalf) {
+            printString += indentComments(node.getComments());
+        }
         if(node.hasParens()) {
             printString += "(";
             node.getLeftExpr().accept(this);
@@ -727,7 +749,9 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(UnaryNegExpr node) {
-        printString += indentComments(node.getComments());
+        if(!rightHalf) {
+            printString += indentComments(node.getComments());
+        }
         String op = node.getOpName();
         if(node.hasParens()) {
 
@@ -749,7 +773,9 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(UnaryNotExpr node) {
-        printString += indentComments(node.getComments());
+        if(!rightHalf) {
+            printString += indentComments(node.getComments());
+        }
         String op = node.getOpName();
         if(node.hasParens()) {
 
@@ -771,7 +797,9 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(UnaryIncrExpr node) {
-        printString += indentComments(node.getComments());
+        if(!rightHalf) {
+            printString += indentComments(node.getComments());
+        }
         String name = node.getOpName();
         if(node.isPostfix()) {
             if(inForLoop) {
@@ -834,7 +862,9 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(UnaryDecrExpr node) {
-        printString += indentComments(node.getComments());
+        if(!rightHalf) {
+            printString += indentComments(node.getComments());
+        }
         String name = node.getOpName();
         if(node.isPostfix()) {
             if(inForLoop) {
@@ -897,7 +927,9 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(ConstIntExpr node) {
-        printString += indentComments(node.getComments());
+        if(!rightHalf) {
+            printString += indentComments(node.getComments());
+        }
         String num = node.getConstant();
         if(node.hasParens()) {
             printString += "(" + num + ")";
@@ -915,7 +947,9 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(ConstBooleanExpr node) {
-        printString += indentComments(node.getComments());
+        if(!rightHalf) {
+            printString += indentComments(node.getComments());
+        }
         String constBool = node.getConstant();
         if(node.hasParens()) {
             printString += "(" + constBool + ")";
@@ -933,7 +967,9 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(ConstStringExpr node) {
-        printString += indentComments(node.getComments());
+        if(!rightHalf) {
+            printString += indentComments(node.getComments());
+        }
         String constString = node.getConstant();
         if(node.hasParens()) {
             printString += "(\"" + constString + "\")";
@@ -974,5 +1010,6 @@ public class PrintVisitor extends Visitor {
 
 
     //TODO - Wyett said he would split lines of code that are more than 80 chars long
+    //Todo - I think you can get rid of some duplicate code by having a visitUnary and visitConstant and just handle special cases
 
 }
