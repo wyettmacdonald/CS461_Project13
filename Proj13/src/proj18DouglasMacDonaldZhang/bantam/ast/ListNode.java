@@ -57,7 +57,7 @@ public abstract class ListNode extends ASTNode
      * @param lineNum source line number corresponding to this AST node
      */
     protected ListNode(int lineNum) {
-        //The comments get associated with the first item in it, not the list TODO verify
+        //The comments get associated with the first item in it, not the list
         super(lineNum, "");
         listElements = new Vector<ASTNode>();
     }

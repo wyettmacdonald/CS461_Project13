@@ -93,8 +93,7 @@ public class PrintVisitor extends Visitor {
 //        curTab.pop();
 //        printString += getTab() + "}\n";
         printString += indentComments(node.getComments());
-        printString +=  getTab() + node.toString(); //Tia addition - removing new line because comments should handle it
-        //printString += "\n" + getTab() + node.toString();
+        printString += "\n" + getTab() + node.toString();
         addTab();
         node.getMemberList().accept(this);
         curTab.pop();
@@ -120,7 +119,7 @@ public class PrintVisitor extends Visitor {
 //        printString += ";\n";
         Expr expr = node.getInit();
         printString += indentComments(node.getComments());
-        printString +=  getTab() + node.toString(); //Tia addition - removing new line because comments should handle it
+        printString += "\n" + getTab() + node.toString();
         if (expr != null) {
             expr.accept(this);
             printString += ";";
@@ -149,7 +148,7 @@ public class PrintVisitor extends Visitor {
 //        curTab.pop();
 //        printString += getTab() + "}\n\n";
         printString += indentComments(node.getComments());
-        printString +=  getTab() + node.toString(); //Tia addition - removing new line because comments should handle it
+        printString += "\n" + getTab() + node.toString();
         node.getFormalList().accept(this);
         printString += ") {\n";
         addTab();
@@ -182,12 +181,14 @@ public class PrintVisitor extends Visitor {
 //        String type = node.getType();
 //        String name = node.getName();
         printString += indentComments(node.getComments());
-        printString +=  getTab() + node.toString(); //Tia addition - removing new line because comments should handle it
+//        printString += "\n" + getTab() + node.toString();
+        printString += "\n" + getTab() + "var " + node.getName();
         Expr initExpr = node.getInit();
         if (initExpr != null) {
+            printString += " = ";
             initExpr.accept(this);
-            printString += ";";
         }
+        printString += ";";
         return null;
     }
 
@@ -198,6 +199,7 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(IfStmt node) {
+        printString += indentComments(node.getComments());
         printString += "\n" + getTab() + "if( ";
         node.getPredExpr().accept(this);
         printString += ") {\n";
@@ -223,6 +225,7 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(WhileStmt node) {
+        printString += indentComments(node.getComments());
         printString += "\n" + getTab() + "while(";
         node.getPredExpr().accept(this);
         printString += ") {\n";
@@ -240,6 +243,7 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(ForStmt node) {
+        printString += indentComments(node.getComments());
         printString += "\n" + getTab() + "for(";
         inForLoop = true;
         node.getInitExpr().accept(this);
@@ -263,6 +267,7 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(BreakStmt node) {
+        printString += indentComments(node.getComments());
         printString += "\n" + getTab() + "break;";
         return null;
     }
@@ -274,6 +279,7 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(BlockStmt node) {
+        printString += indentComments(node.getComments());
         node.getStmtList().accept(this);
         return null;
     }
@@ -285,6 +291,7 @@ public class PrintVisitor extends Visitor {
      * @return result of the visit
      */
     public Object visit(ReturnStmt node) {
+        printString += indentComments(node.getComments());
         Expr expr = node.getExpr();
         printString += "\n" + getTab() + "return";
         if (expr != null) {
@@ -302,6 +309,7 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(DispatchExpr node) {
 //        System.out.println(node.getMethodName() + " " + parens);
+        printString += indentComments(node.getComments());
         String name = node.getMethodName();
         Expr expr = node.getRefExpr();
         printString += "\n" + getTab();
@@ -342,7 +350,7 @@ public class PrintVisitor extends Visitor {
      * @param node the expression list node
      * @return result of the visit
      */
-    public Object visit(ExprList node) {
+    public Object visit(ExprList node) { //Lists can't have comments
         List<String> typesList = new ArrayList<>();
         for (ASTNode expr : node) {
             expr.accept(this);
@@ -359,6 +367,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(NewExpr node) {
+        printString += indentComments(node.getComments());
         String type = node.getType();
         if (node.hasParens()) {
             printString += "(new " + type + "())";
@@ -375,8 +384,10 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(InstanceofExpr node) {
+        printString += indentComments(node.getComments());
         String type = node.getType();
         if (node.hasParens()) {
+            System.out.println("getting here");
             printString += "( ";
             node.getExpr().accept(this);
             printString += " instanceof" + type + " )";
@@ -394,6 +405,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(CastExpr node) {
+        printString += indentComments(node.getComments());
         String type = node.getType();
         if (node.hasParens()) {
             printString += "(cast(" + type + ", ";
@@ -443,7 +455,8 @@ public class PrintVisitor extends Visitor {
      */
     public Object visit(VarExpr node) {
         //check that ref.name is legit
-
+        System.out.println("VarEx " + node.getComments());
+        printString += indentComments(node.getComments());
         String varName = node.getName();
         Expr expr = node.getRef();
         if (expr != null) {
@@ -483,7 +496,7 @@ public class PrintVisitor extends Visitor {
         printString += indentComments(node.getComments());
 //        printString += node.toString();
         if (node.hasParens()) {
-            printString += " (new " + node.getType() + "[" + node.getSize().toString() + "]";
+            printString += " (new " + node.getType() + "[" + node.getSize().toString() + "])";
         } else {
             printString += " new " + node.getType() + "[" + node.getSize().toString() + "]";
         }
@@ -551,6 +564,7 @@ public class PrintVisitor extends Visitor {
      * @param op Operator for the node
      */
     public void visitBinary(BinaryExpr node, String op) {
+        printString += indentComments(node.getComments());
         if(node.hasParens()) {
             printString += "(";
             node.getLeftExpr().accept(this);
@@ -716,6 +730,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(UnaryNegExpr node) {
+        printString += indentComments(node.getComments());
         String op = node.getOpName();
         if(node.hasParens()) {
 
@@ -737,6 +752,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(UnaryNotExpr node) {
+        printString += indentComments(node.getComments());
         String op = node.getOpName();
         if(node.hasParens()) {
 
@@ -758,6 +774,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(UnaryIncrExpr node) {
+        printString += indentComments(node.getComments());
         String name = node.getOpName();
         if(node.isPostfix()) {
             if(inForLoop) {
@@ -820,6 +837,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(UnaryDecrExpr node) {
+        printString += indentComments(node.getComments());
         String name = node.getOpName();
         if(node.isPostfix()) {
             if(inForLoop) {
@@ -882,6 +900,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(ConstIntExpr node) {
+        printString += indentComments(node.getComments());
         String num = node.getConstant();
         if(node.hasParens()) {
             printString += "(" + num + ")";
@@ -899,6 +918,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(ConstBooleanExpr node) {
+        printString += indentComments(node.getComments());
         String constBool = node.getConstant();
         if(node.hasParens()) {
             printString += "(" + constBool + ")";
@@ -916,6 +936,7 @@ public class PrintVisitor extends Visitor {
      * @return the type of the expression
      */
     public Object visit(ConstStringExpr node) {
+        printString += indentComments(node.getComments());
         String constString = node.getConstant();
         if(node.hasParens()) {
             printString += "(\"" + constString + "\")";
@@ -927,14 +948,34 @@ public class PrintVisitor extends Visitor {
     }
 
 
-    private String indentComments(String comments){
-        String indentedComments = "";
-        String[] commentsByLine = comments.split("\n");
-        for(int i = 0; i < commentsByLine.length; i++){
-            indentedComments += getTab() + commentsByLine[i] + "\n";
+    /*
+    * Indents comments enough to align them with the current level of indentation in the file
+    * Unfortunately, comments that were split onto multiple lines for being too long by the Parser
+    * may not have the first line in alignment with the rest - the first line will preserve its original whitespace,
+    * which is not added to subsequent lines. The original whitespace cannot be stripped to match the alignment or
+    * they could end up on the wrong line
+    * @param comments is a String representing the comments to be indented
+    */
+    private String indentComments(String comments) {
+        if (comments.length() > 0) {
+            String indentedComments = "";
+            String[] commentsByLine = comments.split("\n");
+            for (int i = 0; i < commentsByLine.length; i++) {
+                //if(commentsByLine[i].length() > 2 && commentsByLine[i].substring(0, 2).equals("//")) System.out.println(commentsByLine[i]);
+                indentedComments += getTab() + commentsByLine[i];
+                //if(commentsByLine[i].length() > 2 && commentsByLine[i].substring(0, 2).equals("//")) System.out.println(getTab() + commentsByLine[i]);
+                if (i < commentsByLine.length - 1) {
+                    indentedComments += "\n";
+                }
+            }
+            return indentedComments;
         }
-        return indentedComments;
+        else {
+            return "";
+        }
     }
 
-}
 
+    //TODO - Split lines of code that are more than 80 chars long
+
+}

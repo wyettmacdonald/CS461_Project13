@@ -125,7 +125,7 @@ public class ArrayAssignExpr extends Expr {
         if(refName != null){
             arrAssignStr += refName + ".";
         }
-        arrAssignStr += name + "[" + index +"]" + " = " + expr.toString(); //TODO Is this a statement or not? ExprStmt?
+        arrAssignStr += name + "[" + index +"]" + " = " + expr.toString();
         return arrAssignStr;
     }
 

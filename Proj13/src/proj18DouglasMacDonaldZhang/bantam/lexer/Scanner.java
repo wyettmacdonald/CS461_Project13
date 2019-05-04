@@ -136,8 +136,6 @@ public class Scanner
        // System.out.println("curComment Before" + currentTokenSpelling);
         if(whitespace.length() > 0 && whitespace.trim().equals("")) { //Make sure it's only white space
             System.out.println("Whitespace " + whitespace + " " + whitespace.length());
-            //It turns out on the first comment, whitespace is somehow mysteriously getting "null "? Hardcoding a fix for now
-            //TODO figure out where the "null " is coming from
             currentTokenSpelling = currentTokenSpelling.insert(0, whitespace);
         }
         whitespace = "";

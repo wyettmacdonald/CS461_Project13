@@ -52,6 +52,12 @@ public class Parser
     private ErrorHandler errorHandler;
     private String comments = "";
     private boolean hasParens = false;
+    //Optional parentheses
+    //CAN HAVE:  constant exprs, new array expressions, super/this, a whole dispatch expression, instanceof, array, math, var on right side
+    //CAN'T HAVE: VarExpr on the left side, BlockStmt, break, DeclStmt, Formal, ExprStmt, anything on left, ReturnStmt
+    //Effectively: possible for expressions on right side, it sounds like
+
+    private String exprComments = "";
 
 
     // constructor
@@ -75,11 +81,6 @@ public class Parser
     }
 
     // unconditionally fetch the next token
-    //Tia notes: I've currently marked parentheses as impossible for everything
-    // until I figure out exactly how the parser would process then
-    //CAN HAVE:  constant exprs, new array expressions, super/this, a whole dispatch expression, instanceof, array, math, var on right side
-    //CAN'T HAVE: VarExpr on the left side, BlockStmt, break, DeclStmt, Formal, ExprStmt, anything on left, ReturnStmt
-    //  TODO change any nodes that can't have parens outright so the constructor doesn't let you choose
 
     private void advance() {
         while((currentToken = scanner.scan()).kind == Token.Kind.COMMENT){
@@ -136,8 +137,8 @@ public class Parser
     //<Program> ::= <Class> | <Class> <Program>
     private Program parseProgram() {
         String beginningComments = beginNewComments(); //Comments collected by the parse() method that called parseProgram
-        System.out.println("BEGINNING PARSING PROGRAM");
-        System.out.println("Begin: " + beginningComments);
+        //System.out.println("BEGINNING PARSING PROGRAM");
+        //System.out.println("Begin: " + beginningComments);
         int position = currentToken.position;
         ClassList clist = new ClassList(position);
 
@@ -145,7 +146,6 @@ public class Parser
             Class_ aClass = parseClass();
             clist.addElement(aClass);
         }
-        // TODO check if you can put parentheses around a Program
         return new Program(position, clist, beginningComments,  beginNewComments());
     }
 
@@ -155,32 +155,53 @@ public class Parser
     */
     private String beginNewComments(){
         String oldComments = comments;
-        if(oldComments.length() > 0) System.out.println("\nToken: + " + currentToken.spelling + " - old comments are " + oldComments + "\n");
+        if(oldComments.length() > 0) System.out.println("\nToken: " + currentToken.spelling + " - old comments are " + oldComments + "\n");
+        int index = 0;
+        StringBuilder whiteSpaceBefore = new StringBuilder();
+        while(index < oldComments.length() && Character.isWhitespace(oldComments.charAt(index))){
+            whiteSpaceBefore.append(oldComments.charAt(index));
+            index++;
+        }
+
+        StringBuilder whiteSpaceAfter = new StringBuilder();
+        index = oldComments.length()-1;
+        while(index > 0 && Character.isWhitespace(oldComments.charAt(index))){
+            whiteSpaceAfter.insert(0, oldComments.charAt(index));
+            System.out.println("Found whitespace after");
+            index--;
+        }
+
         String[] oldCommentsByLine = oldComments.split("\n");
         String reformattedComments = "";
         for(int i = 0; i < oldCommentsByLine.length; i++){
             if(oldCommentsByLine[i].length() > 0){
                 reformattedComments += reformat(oldCommentsByLine[i], false) + "\n";
             }
-            //TODO figure out a way not to add a new line to an end of file comment
+
             //if(reformattedComments.length() > 0) System.out.println("Reformed version is " +  reformatComments(oldCommentsByLine[i]) + " a");
         }
         comments = "";
-        //if(reformattedComments.length() > 0) System.out.println("\nReformatted comments are " + reformattedComments + "\nDone");
+        reformattedComments = whiteSpaceBefore.toString() + reformattedComments.trim() + whiteSpaceAfter.toString();
+        if(reformattedComments.length() > 0) System.out.println("\nReformatted comments are " + reformattedComments);
+
         return reformattedComments;
     }
 
     /*
-    * TODO fill out
+    * Reformats a string or comment that's over 80 chars long by breaking it into multiple lines no more than 80 chars each
+    * Breaks at words. If there's a word over 80 chars, it'll break at 80 chars exactly.
+    * @param contents is a String representing a string/comment to be broken up
+    * @param is a String representing whether it's a String (true) or comment (false)
+    * @return a String of the input broken up
     */
-    private String reformat(String comments, boolean isString){
-        if(comments.length() > 80){
-            System.out.println("Start off as " + comments);
-            boolean isSingleLine = "//".equals(comments.trim().substring(0, 2));
+    private String reformat(String content, boolean isString){
+        if(content.length() > 80){
+            //System.out.println("Start off as " + comments);
+            boolean isSingleLine = "//".equals(content.trim().substring(0, 2));
             //System.out.println(comments.trim().substring(0, 2) + " // " + "//".equals(comments.trim().substring(0, 2)));
             String reformattedComments = "";
             String shorterLine = "";
-            String[] words = comments.split(" ");
+            String[] words = content.split(" ");
             //Split it into words and begin a new line on the word before it reaches 80 chars
             for(int i = 0; i < words.length; i++) {
                 //If the word is 80+ chars long, give up on nice splitting and split it every 80 chars
@@ -227,12 +248,20 @@ public class Parser
         }
         else{
             //System.out.println("String is " + string);
-            return comments;
+            return content;
         }
     }
 
     /*
-    *TODO fill out
+    * Appends a string or comment to an existing String representing a series of smaller strings/comments
+    * breaking it onto a new line
+    * @param isString ia boolean representing if it's a string or a comment.
+    * If true, " + " will be added before the new line to mark a new string
+    * @param isSingleLine is a boolean representing if it's multiline comment or single line. Mutually exclusive with
+    * isString. If true, each new line's comment will begin with a //
+    * @param curString is the String representing the current list of a series of strings/comments
+    * @param restOfLine is a String that should be added to curString
+    * @return the new version of the string with restOfLine appended and the ending handled
     */
     private String handleCommentOrStringEnding(boolean isString, boolean isSingleLine, String curString, String restOfLine){
         if(isString){
@@ -241,7 +270,7 @@ public class Parser
         else{
             curString += restOfLine + "\n";
             if(isSingleLine){
-                curString += "//"; //In case of an overly long one-liner
+                curString += "//"; //In case of an overly long one-liner.
             }
         }
         return curString;
@@ -529,7 +558,11 @@ public class Parser
         int position = currentToken.position;
         //System.out.println("Cur token is " + currentToken.kind + " and hasParens is " + hasParens);
 
-        String beginningComments = beginNewComments();
+        //Do not call beginNewComments until the previous comments stored have been processed
+        if("".equals(exprComments)) {
+            exprComments = beginNewComments();
+            System.out.println("Expr Comments " + exprComments);
+        }
 
         result = parseOrExpr();
         if (currentToken.kind == ASSIGN && result instanceof VarExpr) {
@@ -543,7 +576,8 @@ public class Parser
             String lhsName = lhs.getName();
             String lhsRefName = (lhs.getRef() == null ? null :
                     ((VarExpr) lhs.getRef()).getName());
-            result = new AssignExpr(position, lhsRefName, lhsName, right, beginningComments, hasParens);
+            result = new AssignExpr(position, lhsRefName, lhsName, right, exprComments, hasParens);
+            exprComments = "";
             //hasParens = false;
         }
         else if (currentToken.kind == ASSIGN && result instanceof ArrayExpr) {
@@ -563,7 +597,8 @@ public class Parser
             String lhsRefName = (lhsExpr.getRef() == null ? null :
                     ((VarExpr) lhsExpr.getRef()).getName());
             Expr index = lhs.getIndex();
-            result = new ArrayAssignExpr(position, lhsRefName, lhsName, index, right, beginningComments, hasParens);
+            result = new ArrayAssignExpr(position, lhsRefName, lhsName, index, right, exprComments, hasParens);
+            exprComments = "";
             //hasParens = false;
         }
 
@@ -574,19 +609,15 @@ public class Parser
     //<LogicalOR>::= <logicalAND> <LogicalORRest>
     //<LogicalORRest>::= || <LogicalAND> <LogicalORRest> | EMPTY
     private Expr parseOrExpr() {
-        String beginningComments = beginNewComments();
         int position = currentToken.position;
         Expr left;
-        if(currentToken.kind == INTCONST){
-            //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
-        }
 
         left = parseAndExpr();
         while (currentToken.spelling.equals("||")) {
             advance();
             Expr right = parseAndExpr();
-            left = new BinaryLogicOrExpr(position, left, right, beginningComments, hasParens);
-            //hasParens = false;
+            left = new BinaryLogicOrExpr(position, left, right, exprComments, hasParens);
+            exprComments = "";
         }
 
         return left;
@@ -596,7 +627,6 @@ public class Parser
     //<LogicalAND>::=<ComparisonExpr> <LogicalANDRest>
     //<LogicalANDRest>::= && <ComparisonExpr> <LogicalANDRest> | EMPTY
     private Expr parseAndExpr() {
-        String beginningComments = beginNewComments();
 
         if(currentToken.kind == INTCONST){
             //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
@@ -607,8 +637,8 @@ public class Parser
         while (currentToken.spelling.equals("&&")) {
             advance();
             Expr right = parseComparisonExpr();
-            left = new BinaryLogicAndExpr(position, left, right, beginningComments, hasParens);
-            //hasParens = false;
+            left = new BinaryLogicAndExpr(position, left, right, exprComments, hasParens);
+            exprComments = "";
         }
 
         return left;
@@ -621,23 +651,21 @@ public class Parser
     private Expr parseComparisonExpr() {
         int position = currentToken.position;
 
-        if(currentToken.kind == INTCONST){
-            //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
-        }
-
         Expr left = parseRelationalExpr();
-        String beginningComments = beginNewComments();
+
 
         if (currentToken.spelling.equals("==")) {
             advance();
             Expr right = parseRelationalExpr();
-            left = new BinaryCompEqExpr(position, left, right, beginningComments, hasParens);
+            left = new BinaryCompEqExpr(position, left, right, exprComments, hasParens);
+            exprComments = "";
            // hasParens = false;
         }
         else if (currentToken.spelling.equals("!=")) {
             advance();
             Expr right = parseRelationalExpr();
-            left = new BinaryCompNeExpr(position, left, right, beginningComments, hasParens);
+            left = new BinaryCompNeExpr(position, left, right, exprComments, hasParens);
+            exprComments = "";
             //hasParens = false;
         }
 
@@ -650,34 +678,43 @@ public class Parser
     private Expr parseRelationalExpr() {
         int position = currentToken.position;
         Expr left, right;
-        String beginningComments = beginNewComments();
-
-        if(currentToken.kind == INTCONST){
-            //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
-        }
 
         left = parseAddExpr();
+        String commentStorage;
         switch (currentToken.spelling) {
+            //Is one of these cases guaranteed to trigger? Can't tell, too tired. Reset exprComments each time to be safe
             case "<":
                 advance();
                 right = parseAddExpr();
-                return new BinaryCompLtExpr(position, left, right, beginningComments, hasParens);
+                commentStorage = exprComments;
+                exprComments = "";
+               // System.out.println("< has parens: " + hasParens);
+                return new BinaryCompLtExpr(position, left, right, commentStorage, hasParens);
             case "<=":
                 advance();
                 right = parseAddExpr();
-                return new BinaryCompLeqExpr(position, left, right, beginningComments, hasParens);
+                commentStorage = exprComments;
+                exprComments = "";
+                return new BinaryCompLeqExpr(position, left, right, commentStorage, hasParens);
             case ">":
                 advance();
                 right = parseAddExpr();
-                return new BinaryCompGtExpr(position, left, right, beginningComments, hasParens);
+                commentStorage = exprComments;
+                exprComments = "";
+                //System.out.println("> has parens: " + hasParens);
+                return new BinaryCompGtExpr(position, left, right, commentStorage, hasParens);
             case ">=":
                 advance();
                 right = parseAddExpr();
-                return new BinaryCompGeqExpr(position, left, right, beginningComments, hasParens);
+                commentStorage = exprComments;
+                exprComments = "";
+                return new BinaryCompGeqExpr(position, left, right, commentStorage, hasParens);
             case "instanceof":
                 advance();
                 String type = parseType();
-                return new InstanceofExpr(position, left, type, beginningComments, hasParens);
+                commentStorage = exprComments;
+                exprComments = "";
+                return new InstanceofExpr(position, left, type, commentStorage, hasParens);
         }
 
         return left;
@@ -688,11 +725,6 @@ public class Parser
     //<MoreMult>::= + <MultExpr> <MoreMult> | - <MultiExpr> <MoreMult> | EMPTY
     private Expr parseAddExpr() {
         int position = currentToken.position;
-        String beginningComments = beginNewComments();
-
-        if(currentToken.kind == INTCONST){
-            //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
-        }
 
         Expr left = parseMultExpr();
 
@@ -700,12 +732,14 @@ public class Parser
             if (currentToken.spelling.equals("+")) {
                 advance();
                 Expr right = parseMultExpr();
-                left = new BinaryArithPlusExpr(position, left, right, beginningComments, hasParens);
+                left = new BinaryArithPlusExpr(position, left, right, exprComments, hasParens);
+                exprComments = "";
             }
             else {
                 advance();
                 Expr right = parseMultExpr();
-                left = new BinaryArithMinusExpr(position, left, right, beginningComments, hasParens);
+                left = new BinaryArithMinusExpr(position, left, right, exprComments, hasParens);
+                exprComments = "";
             }
         }
 
@@ -722,11 +756,6 @@ public class Parser
         int position = currentToken.position;
         Expr left, right;
 
-        if(currentToken.kind == INTCONST){
-            //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
-        }
-
-        String beginningComments = beginNewComments();
 
         left = parseNewCastOrUnary();
         while (currentToken.kind == MULDIV) {
@@ -734,17 +763,20 @@ public class Parser
                 case "/":
                     advance();
                     right = parseNewCastOrUnary();
-                    left = new BinaryArithDivideExpr(position, left, right, beginningComments, hasParens);
+                    left = new BinaryArithDivideExpr(position, left, right, exprComments, hasParens);
+                    exprComments = "";
                     break;
                 case "*":
                     advance();
                     right = parseNewCastOrUnary();
-                    left = new BinaryArithTimesExpr(position, left, right, beginningComments, hasParens);
+                    left = new BinaryArithTimesExpr(position, left, right, exprComments, hasParens);
+                    exprComments = "";
                     break;
                 case "%":
                     advance();
                     right = parseNewCastOrUnary();
-                    left = new BinaryArithModulusExpr(position, left, right, beginningComments, hasParens);
+                    left = new BinaryArithModulusExpr(position, left, right, exprComments, hasParens);
+                    exprComments = "";
                     break;
             }
         }
@@ -755,10 +787,6 @@ public class Parser
     //<NewCastOrUnary>::= <NewExpression> | <CastExpression> | <UnaryPrefix>
     private Expr parseNewCastOrUnary() {
         Expr result;
-
-        if(currentToken.kind == INTCONST){
-            //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
-        }
 
         switch (currentToken.kind) {
             case NEW:
@@ -779,28 +807,28 @@ public class Parser
     private Expr parseNew() {
         int position = currentToken.position;
         advance();
-        String beginningComments = beginNewComments();
-
-
 
         String type = parseIdentifier();
         if (currentToken.kind == LPAREN) {
             advance();
             advanceIfMatches(RPAREN);
-            return new NewExpr(position, type, beginningComments, hasParens);
+            String commentStorage = exprComments;
+            exprComments = "";
+            return new NewExpr(position, type, commentStorage, hasParens);
         }
         else {
             advanceIfMatches(LBRACKET);
             Expr sizeExpr = parseExpression();
             advanceIfMatches(RBRACKET);
-            return new NewArrayExpr(position, type, sizeExpr, beginningComments, hasParens);
+            String commentStorage = exprComments;
+            exprComments = "";
+            return new NewArrayExpr(position, type, sizeExpr, commentStorage, hasParens);
         }
     }
 
 
     //<CastExpression>::= <Cast> ( <Type> , <Expression> )
     private Expr parseCast() {
-        String beginningComments = beginNewComments();
 
         Expr castExpression;
         int position = currentToken.position;
@@ -812,7 +840,8 @@ public class Parser
         Expr expression = parseExpression();
         advanceIfMatches(RPAREN);
 
-        castExpression = new CastExpr(position, type, expression, beginningComments, hasParens);
+        castExpression = new CastExpr(position, type, expression, exprComments, hasParens);
+        exprComments = "";
         return castExpression;
     }
 
@@ -823,27 +852,24 @@ public class Parser
         int position = currentToken.position;
         Token.Kind kind = currentToken.kind;
 
-        if(currentToken.kind == INTCONST){
-            //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
-        }
-
-        String beginningComments = beginNewComments();
 
         if (currentToken.spelling.equals("-") || kind == UNARYDECR || kind == UNARYINCR || kind == UNARYNOT) {
             advance();
             Expr expr = parseUnaryPrefix();
+            String commentStorage = exprComments;
+            exprComments = "";
             if (kind == PLUSMINUS) {
-                return new UnaryNegExpr(position, expr, beginningComments, hasParens);
+                return new UnaryNegExpr(position, expr, commentStorage, hasParens);
             }
             else if (kind == UNARYDECR) {
-                return new UnaryDecrExpr(position, expr, false, beginningComments, hasParens);
+                return new UnaryDecrExpr(position, expr, false, commentStorage, hasParens);
             }
             else if (kind == UNARYINCR) {
-                return new UnaryIncrExpr(position, expr, false, beginningComments, hasParens);
+                return new UnaryIncrExpr(position, expr, false, commentStorage, hasParens);
             }
             else // kind == UNARYNOT
             {
-                return new UnaryNotExpr(position, expr, beginningComments, hasParens);
+                return new UnaryNotExpr(position, expr, commentStorage, hasParens);
             }
         }
         else {
@@ -860,11 +886,8 @@ public class Parser
         Expr unary;
         int position = currentToken.position;
 
-        if(currentToken.kind == INTCONST){
-            //System.out.println("Cur token is IntConstant and has parens is " + hasParens);
-        }
-
         String beginningComments = beginNewComments();
+        //System.out.println("Before parsePrimary " + beginningComments);
 
         unary = parsePrimary();
 
@@ -872,11 +895,13 @@ public class Parser
         //System.out.println("Cur token is after unaryPostfix and has parens is " + hasParens);
 
         if (currentToken.kind == UNARYINCR) {
-            unary = new UnaryIncrExpr(position, unary, true, beginningComments, hasParens);
+            unary = new UnaryIncrExpr(position, unary, true, exprComments, hasParens);
+            exprComments = "";
             advance();
         }
         else if (currentToken.kind == UNARYDECR) {
-            unary = new UnaryDecrExpr(position, unary, true, beginningComments, hasParens);
+            unary = new UnaryDecrExpr(position, unary, true, exprComments, hasParens);
+            exprComments = "";
             advance();
         }
 
@@ -916,7 +941,11 @@ public class Parser
     private Expr parsePrimary() {
         Expr primary;
 
-        String beginningComments = beginNewComments();
+        //String beginningComments = beginNewComments();
+        //System.out.println("Primary comments " + comments);
+        /*if("".equals(exprComments)){
+            exprComments = beginNewComments();
+        }*/
 
         switch (currentToken.kind) {
             case INTCONST:
@@ -930,6 +959,7 @@ public class Parser
                 advance();
                 hasParens = true;
                 System.out.println("Found optional parentheses. Next token is " + currentToken.kind);
+
                 primary = parseExpression();
                 advanceIfMatches(RPAREN);
                 if(currentToken.kind == LPAREN) //cannot have ( expr )( args )
@@ -938,32 +968,39 @@ public class Parser
                             currentToken.kind.name());
                 break;
             default:
+                System.out.println("Before Var Expr " + exprComments);
                 String id = parseIdentifier();
-                primary = new VarExpr(currentToken.position, null, id, beginningComments, hasParens);
+                System.out.println("Making Var Expr " + exprComments);
+                primary = new VarExpr(currentToken.position, null, id, exprComments, hasParens);
         }
         // now add the suffixes
         while (    currentToken.kind == DOT
                 || currentToken.kind == LPAREN && primary instanceof VarExpr
                 || currentToken.kind == LBRACKET) {
-            beginningComments = beginNewComments();
+            //beginningComments = beginNewComments();
             if (currentToken.kind == LPAREN) {
                 advance();
                 ExprList ar = parseArguments();
                 advanceIfMatches(RPAREN);
                 VarExpr varExpr = (VarExpr) primary;
                 primary = new DispatchExpr(primary.getLineNum(), varExpr.getRef(),
-                        varExpr.getName(), ar, beginningComments, hasParens);
+                        varExpr.getName(), ar, exprComments, hasParens);
+                exprComments = "";
             }
             else if (currentToken.kind == LBRACKET) {
                 advance();
                 Expr index = parseExpression();
                 advanceIfMatches(RBRACKET);
-                primary = new ArrayExpr(primary.getLineNum(), primary, null, index, beginningComments, hasParens);
+                primary = new ArrayExpr(primary.getLineNum(), primary, null, index, exprComments, hasParens);
+                exprComments = "";
             }
             else { // currentToken is a DOT
                 advance();
+                System.out.println("Before Var Expr " + exprComments);
                 String id = parseIdentifier();
-                primary = new VarExpr(currentToken.position, primary, id, beginningComments, hasParens);
+                System.out.println("Making Var Expr " + exprComments);
+                primary = new VarExpr(currentToken.position, primary, id, exprComments, hasParens);
+                exprComments = "";
             }
         }
         hasParens = false;
@@ -1059,9 +1096,10 @@ public class Parser
         int position = currentToken.position;
         String spelling = currentToken.spelling;
 
-        String beginningComments = beginNewComments();
         advanceIfMatches(STRCONST);
-        return new ConstStringExpr(position, reformat(spelling, true), beginningComments, hasParens);
+        String commentStorage = exprComments;
+        exprComments = "";
+        return new ConstStringExpr(position, reformat(spelling, true), commentStorage, hasParens);
     }
 
 
@@ -1071,7 +1109,9 @@ public class Parser
         System.out.println("Has parens in const Int: " + hasParens);
         String beginningComments = beginNewComments();
         advanceIfMatches(INTCONST);
-        return new ConstIntExpr(position, spelling, beginningComments, hasParens);
+        String commentStorage = exprComments;
+        exprComments = "";
+        return new ConstIntExpr(position, spelling, commentStorage, hasParens);
     }
 
 
@@ -1081,7 +1121,9 @@ public class Parser
 
         String beginningComments = beginNewComments();
         advanceIfMatches(BOOLEAN);
-        return new ConstBooleanExpr(position, spelling, beginningComments, hasParens);
+        String commentStorage = exprComments;
+        exprComments = "";
+        return new ConstBooleanExpr(position, spelling, commentStorage, hasParens);
     }
 
 
