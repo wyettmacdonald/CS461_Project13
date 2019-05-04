@@ -477,9 +477,6 @@ public class PrintVisitor extends Visitor {
             }
         }
 
-        //Tia addition
-
-//        printString += node.toString();
 
         return null;
     }
@@ -976,6 +973,6 @@ public class PrintVisitor extends Visitor {
     }
 
 
-    //TODO - Split lines of code that are more than 80 chars long
+    //TODO - Wyett said he would split lines of code that are more than 80 chars long
 
 }

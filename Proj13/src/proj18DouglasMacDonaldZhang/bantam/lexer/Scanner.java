@@ -135,7 +135,7 @@ public class Scanner
         //Save the whitespace preceding if it's a comment
        // System.out.println("curComment Before" + currentTokenSpelling);
         if(whitespace.length() > 0 && whitespace.trim().equals("")) { //Make sure it's only white space
-            System.out.println("Whitespace " + whitespace + " " + whitespace.length());
+            //System.out.println("Whitespace " + whitespace + " " + whitespace.length());
             currentTokenSpelling = currentTokenSpelling.insert(0, whitespace);
         }
         whitespace = "";

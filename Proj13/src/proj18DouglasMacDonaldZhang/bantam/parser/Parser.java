@@ -156,6 +156,10 @@ public class Parser
     private String beginNewComments(){
         String oldComments = comments;
         if(oldComments.length() > 0) System.out.println("\nToken: " + currentToken.spelling + " - old comments are " + oldComments + "\n");
+
+        //if("/* It's a feature. This comment will be prettier once it's moved*/".equals(oldComments.trim())) Thread.dumpStack();
+
+        //Store the whitespace at the beginning so it's not lost to reformatting
         int index = 0;
         StringBuilder whiteSpaceBefore = new StringBuilder();
         while(index < oldComments.length() && Character.isWhitespace(oldComments.charAt(index))){
@@ -163,6 +167,7 @@ public class Parser
             index++;
         }
 
+        //Store the whitespace at the end so it's not lost to reformatting - I don't think this is working fully right now -Tia
         StringBuilder whiteSpaceAfter = new StringBuilder();
         index = oldComments.length()-1;
         while(index > 0 && Character.isWhitespace(oldComments.charAt(index))){
@@ -439,11 +444,18 @@ public class Parser
 
     //<ExpressionStmt>::= <Expression> ;
     private ExprStmt parseExpressionStmt() {
-        String beginningComments = beginNewComments();
+        if("".equals(exprComments)) {
+            exprComments = beginNewComments();
+            System.out.println("Expr Comments " + exprComments + " " + currentToken.spelling);
+        }
+        else{
+            System.out.println("Current comments are " + exprComments);
+        }
+
         int position = currentToken.position;
         Expr expr = parseExpression();
         advanceIfMatches(SEMICOLON);
-        return new ExprStmt(position, expr, beginningComments);
+        return new ExprStmt(position, expr, exprComments);
     }
 
 
@@ -561,7 +573,10 @@ public class Parser
         //Do not call beginNewComments until the previous comments stored have been processed
         if("".equals(exprComments)) {
             exprComments = beginNewComments();
-            System.out.println("Expr Comments " + exprComments);
+            System.out.println("Expr Comments " + exprComments + " " + currentToken.spelling);
+        }
+        else{
+            System.out.println("Current comments are " + exprComments);
         }
 
         result = parseOrExpr();
@@ -943,9 +958,9 @@ public class Parser
 
         //String beginningComments = beginNewComments();
         //System.out.println("Primary comments " + comments);
-        /*if("".equals(exprComments)){
+        if("".equals(exprComments)){
             exprComments = beginNewComments();
-        }*/
+        }
 
         switch (currentToken.kind) {
             case INTCONST:
@@ -958,7 +973,7 @@ public class Parser
             case LPAREN:
                 advance();
                 hasParens = true;
-                System.out.println("Found optional parentheses. Next token is " + currentToken.kind);
+                //System.out.println("Found optional parentheses. Next token is " + currentToken.kind);
 
                 primary = parseExpression();
                 advanceIfMatches(RPAREN);
@@ -1106,7 +1121,7 @@ public class Parser
     private ConstIntExpr parseIntConst() {
         int position = currentToken.position;
         String spelling = currentToken.spelling;
-        System.out.println("Has parens in const Int: " + hasParens);
+        //System.out.println("Has parens in const Int: " + hasParens);
         String beginningComments = beginNewComments();
         advanceIfMatches(INTCONST);
         String commentStorage = exprComments;
