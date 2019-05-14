@@ -8,7 +8,7 @@
 A class
 */
 // a class
-class Main{ // Comment
+class Main { // Comment
 	//Choo choo
 	// a comment to come through
     int x; // another comment
@@ -17,7 +17,7 @@ class Main{ // Comment
     String y;
 	// another
 	//Da Bao
-    boolean bool = false;
+    boolean bool = 5;
     String thing = "Loremipsumdolorsitamet,consecteturadipiscingelit.Inegestasantenonmassaeuismod,aefficiturmassaeleifend.Pellentesquevitaeultriciesurna.Aeneannecsodalesleo.Vivamuspulvinarauguequisnislvariusdapibus.Prointemporiaculisefficitur.Namsedduifaucibus,maximusnislid,venenatisarcu.Praesenttinciduntsitamettortornonconsequat.Phasellusutodioneclacusmolestievestibulum.Doneccursuselitutsempersagittis.Morbiquamlorem,pharetrasedsuscipiteu,pretiumquismetus.Integeregetdapibussem,infringillamagna.Inullamcorpergravidavelitegetmattis.Donec.";	
     String stringthing = "Booya! Loremipsumdolorsitamet,consecteturadipiscingelit.Inegestasantenonmassaeuismod,aefficiturmassaeleifend.Pellentesquevitaeultriciesurna.Aeneannecsodalesleo.Vivamuspulvinarauguequisnislvariusdapibus.Prointemporiaculisefficitur.Namsedduifaucibus,maximusnislid,venenatisarcu.Praesenttinciduntsitamettortornonconsequat.Phasellusutodioneclacusmolestievestibulum.Doneccursuselitutsempersagittis.Morbiquamlorem,pharetrasedsuscipiteu,pretiumquismetus.Integeregetdapibussem,infringillamagna.Inullamcorpergravidavelitegetmattis.Donec.";	
     String ringthing = "Loremipsumdolorsitamet,consecteturadipiscingelit.Inegestasantenonmassaeuismod,aefficiturmassaeleifend.Pellentesquevitaeultriciesurna.Aeneannecsodalesleo.Vivamuspulvinarauguequisnislvariusdapibus.Prointemporiaculisefficitur.Namsedduifaucibus,maximusnislid,venenatisarcu.Praesenttinciduntsitamettortornonconsequat.Phasellusutodioneclacusmolestievestibulum.Doneccursuselitutsempersagittis.Morbiquamlorem,pharetrasedsuscipiteu,pretiumquismetus.Integeregetdapibussem,infringillamagna.Inullamcorpergravidavelitegetmattis.Donec. Mwahaha";	
@@ -60,7 +60,7 @@ class Main{ // Comment
 }
 
 class Parent {
-    String newString = "hello";
+    String newString = 5;
 
 }
 

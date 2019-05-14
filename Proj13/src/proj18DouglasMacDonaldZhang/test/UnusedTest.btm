@@ -7,11 +7,11 @@
 
 
 
-class Main extends Parent{
+class Mainee extends Parent{
 	String meh;
-
-	void blah()
-	{
+	
+	// testing method splitting
+	void blah() {
 		// another comment
 		var arg = (0); //Permitted
 		//(var) arg = 0; and (var arg) = 0; don't parse

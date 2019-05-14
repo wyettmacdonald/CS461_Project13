@@ -77,6 +77,8 @@ public class MasterController {
     @FXML private Button findUsesButton;
     @FXML private Button findUnusedButton;
     @FXML private Button suggestNamesButton;
+    @FXML private Button prevErrorButton;
+    @FXML private Button nextErrorButton;
 
 
     @FXML private TreeView<String> directoryTree;
@@ -153,10 +155,12 @@ public class MasterController {
             this.assembleButton.setDisable(false);
             this.assembleAndRunButton.setDisable(false);
             this.stopButton.setDisable(false);
-            this.findUsesButton.setDisable(false);
-            this.findUnusedButton.setDisable(false);
-            this.suggestNamesButton.setDisable(false);
+//            this.findUsesButton.setDisable(false);
+//            this.findUnusedButton.setDisable(false);
+//            this.suggestNamesButton.setDisable(false);
             this.prettyPrintButton.setDisable(false);
+            this.prevErrorButton.setDisable(false);
+            this.nextErrorButton.setDisable(false);
 
 
         }
@@ -210,11 +214,14 @@ public class MasterController {
         this.scanButton.setDisable(true);
         this.scanParseButton.setDisable(true);
         this.scanParseCheckButton.setDisable(true);
-        this.findUsesButton.setDisable(true);
-        this.findUnusedButton.setDisable(true);
-        this.suggestNamesButton.setDisable(true);
+//        this.findUsesButton.setDisable(true);
+//        this.findUnusedButton.setDisable(true);
+//        this.suggestNamesButton.setDisable(true);
         this.compileButton.setDisable(true);
         this.prettyPrintButton.setDisable(true);
+        this.prevErrorButton.setDisable(true);
+        this.nextErrorButton.setDisable(true);
+
     }
 
 
@@ -226,11 +233,13 @@ public class MasterController {
         this.scanButton.setDisable(false);
         this.scanParseButton.setDisable(false);
         this.scanParseCheckButton.setDisable(false);
-        this.findUsesButton.setDisable(false);
-        this.findUnusedButton.setDisable(false);
-        this.suggestNamesButton.setDisable(false);
+//        this.findUsesButton.setDisable(false);
+//        this.findUnusedButton.setDisable(false);
+//        this.suggestNamesButton.setDisable(false);
         this.compileButton.setDisable(false);
         this.prettyPrintButton.setDisable(false);
+        this.prevErrorButton.setDisable(false);
+        this.nextErrorButton.setDisable(false);
 
         //Disabling MIPS only
         this.assembleButton.setDisable(true);
@@ -514,9 +523,9 @@ public class MasterController {
         this.assembleAndRunButton.setDisable(true);
         this.stopButton.setDisable(true);
         this.prettyPrintButton.setDisable(true);
-        this.findUsesButton.setDisable(true);
-        this.findUnusedButton.setDisable(true);
-        this.suggestNamesButton.setDisable(true);
+//        this.findUsesButton.setDisable(true);
+//        this.findUnusedButton.setDisable(true);
+//        this.suggestNamesButton.setDisable(true);
         this.compileButton.setDisable(true);
 
     }
@@ -636,7 +645,15 @@ public class MasterController {
         toolbarController.handleScanOrScanParse("semanticCheck", false, "suggestions");
     }
 
+    @FXML
+    public void handleNextError(Event event) {
+        toolbarController.handleNextError();
+    }
 
+    @FXML
+    public void handlePrevError(Event event) {
+        toolbarController.handlePrevError();
+    }
 
 
     /**

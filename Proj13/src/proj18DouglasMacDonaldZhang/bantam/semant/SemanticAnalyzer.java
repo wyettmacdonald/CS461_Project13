@@ -138,9 +138,9 @@ public class SemanticAnalyzer
         doTypeChecking();
 
         // if errors were found, throw an exception, indicating failure
-        if (errorHandler.errorsFound()) {
-            throw new CompilationException("Checker errors found.");
-        }
+//        if (errorHandler.errorsFound()) {
+//            throw new CompilationException("Checker errors found.");
+//        }
 
         return root;
     }

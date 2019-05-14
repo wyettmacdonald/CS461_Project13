@@ -108,9 +108,11 @@
 
         <Button fx:id ="prettyPrintButton" onAction="#handlePrettyPrint" text="Pretty Print"/>
 
-        <Button text="Find Uses" fx:id="findUsesButton" onAction="#handleFindUsesButtonAction" />
-        <Button text="Find Unused" fx:id="findUnusedButton" onAction="#handleFindUnusedButtonAction" />
-        <Button text="Suggest Names" fx:id="suggestNamesButton" onAction="#handleSuggestions" />
+        <!--<Button text="Find Uses" fx:id="findUsesButton" onAction="#handleFindUsesButtonAction" />-->
+        <!--<Button text="Find Unused" fx:id="findUnusedButton" onAction="#handleFindUnusedButtonAction" />-->
+        <!--<Button text="Suggest Names" fx:id="suggestNamesButton" onAction="#handleSuggestions" />-->
+        <Button text="Prev Error" fx:id="prevErrorButton" onAction="#handlePrevError" />
+        <Button text="Next Error" fx:id="nextErrorButton" onAction="#handleNextError" />
     </ToolBar>
     <SplitPane orientation="VERTICAL" focusTraversable = "true"
                dividerPositions="0.7" VBox.vgrow="ALWAYS" >
