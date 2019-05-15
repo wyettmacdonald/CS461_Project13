@@ -30,10 +30,7 @@ public class FindMethodsVisitor extends Visitor{
     /**
      * Constructor for the StringConstantsVisitor
      */
-    public FindMethodsVisitor(String name, int lineNum, int numMethods) {
-        this.name = name;
-        this.lineNum = lineNum;
-        this.numMethods = 0;
+    public FindMethodsVisitor() {
     }
 
     /**
@@ -61,7 +58,6 @@ public class FindMethodsVisitor extends Visitor{
      */
     @Override
     public Object visit(Method node) {
-        super.visit(node);
      //   MethodsMap.put(node.getName(), "Method " + numMethods);
         MethodsMap.put(node.getName(), node.getLineNum());
 
@@ -69,17 +65,6 @@ public class FindMethodsVisitor extends Visitor{
         numMethods += 1;
         return null;
     }
-
-
-//    /**
-//     * Method for the "visit" to FormalList nodes, which causes it to retreat from the node and skip its children
-//     *
-//     * @param node is the FormalList node to be visited (and ignored)
-//     */
-//    @Override
-//    public Object visit(FormalList node) {
-//        return null;
-//    }
 
 
 }
