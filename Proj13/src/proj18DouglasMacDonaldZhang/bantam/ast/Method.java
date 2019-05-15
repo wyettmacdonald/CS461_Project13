@@ -28,6 +28,9 @@ package proj18DouglasMacDonaldZhang.bantam.ast;
 
 import proj18DouglasMacDonaldZhang.bantam.visitor.Visitor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * The <tt>Method</tt> class represents a method declaration within
  * a class declaration.  It contains the name of the method (<tt>name</tt>),
@@ -38,6 +41,7 @@ import proj18DouglasMacDonaldZhang.bantam.visitor.Visitor;
  * @see ASTNode
  */
 public class Method extends Member {
+
     /**
      * The return type of the method
      */
@@ -75,6 +79,7 @@ public class Method extends Member {
         this.name = name;
         this.formalList = formalList;
         this.stmtList = stmtList;
+        this.lineNum = lineNum;
     }
 
     /**
@@ -84,6 +89,15 @@ public class Method extends Member {
      */
     public String getReturnType() {
         return returnType;
+    }
+
+    /**
+     * Get the return type of this method
+     *
+     * @return return type of method
+     */
+    public int getLineNum() {
+        return lineNum;
     }
 
     /**

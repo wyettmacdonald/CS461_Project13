@@ -79,6 +79,8 @@ public class MasterController {
     @FXML private Button suggestNamesButton;
     @FXML private Button prevErrorButton;
     @FXML private Button nextErrorButton;
+    @FXML private Button prevMethodButton;
+    @FXML private Button nextMethodButton;
 
 
     @FXML private TreeView<String> directoryTree;
@@ -161,6 +163,8 @@ public class MasterController {
             this.prettyPrintButton.setDisable(false);
             this.prevErrorButton.setDisable(false);
             this.nextErrorButton.setDisable(false);
+            this.prevMethodButton.setDisable(false);
+            this.nextMethodButton.setDisable(false);
 
 
         }
@@ -221,6 +225,8 @@ public class MasterController {
         this.prettyPrintButton.setDisable(true);
         this.prevErrorButton.setDisable(true);
         this.nextErrorButton.setDisable(true);
+        this.prevMethodButton.setDisable(true);
+        this.nextMethodButton.setDisable(true);
 
     }
 
@@ -240,6 +246,8 @@ public class MasterController {
         this.prettyPrintButton.setDisable(false);
         this.prevErrorButton.setDisable(false);
         this.nextErrorButton.setDisable(false);
+        this.prevMethodButton.setDisable(false);
+        this.nextMethodButton.setDisable(false);
 
         //Disabling MIPS only
         this.assembleButton.setDisable(true);
@@ -653,6 +661,16 @@ public class MasterController {
     @FXML
     public void handlePrevError(Event event) {
         toolbarController.handlePrevError();
+    }
+
+    @FXML
+    public void handleNextMethod(Event event) {
+        toolbarController.handleNextMethod();
+    }
+
+    @FXML
+    public void handlePrevMethod(Event event) {
+        toolbarController.handlePrevMethod();
     }
 
 

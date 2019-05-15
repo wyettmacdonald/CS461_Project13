@@ -113,6 +113,8 @@
         <!--<Button text="Suggest Names" fx:id="suggestNamesButton" onAction="#handleSuggestions" />-->
         <Button text="Prev Error" fx:id="prevErrorButton" onAction="#handlePrevError" />
         <Button text="Next Error" fx:id="nextErrorButton" onAction="#handleNextError" />
+        <Button text="Prev Method" fx:id="prevMethodButton" onAction="#handlePrevMethod" />
+        <Button text="Next Method" fx:id="nextMethodButton" onAction="#handleNextMethod" />
     </ToolBar>
     <SplitPane orientation="VERTICAL" focusTraversable = "true"
                dividerPositions="0.7" VBox.vgrow="ALWAYS" >
