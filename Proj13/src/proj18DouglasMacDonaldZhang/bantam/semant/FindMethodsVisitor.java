@@ -11,6 +11,9 @@ import proj18DouglasMacDonaldZhang.bantam.ast.*;
 import proj18DouglasMacDonaldZhang.bantam.util.ClassTreeNode;
 import proj18DouglasMacDonaldZhang.bantam.visitor.Visitor;
 
+import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -25,6 +28,9 @@ public class FindMethodsVisitor extends Visitor{
     private int numMethods;
     private int lineNum;
     private Map<String, Integer> MethodsMap; //Map of all methods
+    private Map<Method, ArrayList<Formal>> docMap;
+    private Method currentMethod;
+    private ArrayList<Formal> formalList;
 
 
     /**
@@ -44,8 +50,13 @@ public class FindMethodsVisitor extends Visitor{
         lineNum = 0;
         //numMethods = 0;
         MethodsMap = new HashMap<>();
+        docMap = new HashMap<>();
         ast.accept(this);
         return MethodsMap;
+    }
+
+    public Map<Method, ArrayList<Formal>> getDocMap() {
+        return docMap;
     }
 
 
@@ -60,9 +71,24 @@ public class FindMethodsVisitor extends Visitor{
     public Object visit(Method node) {
      //   MethodsMap.put(node.getName(), "Method " + numMethods);
         MethodsMap.put(node.getName(), node.getLineNum());
+        currentMethod = node;
+        formalList = new ArrayList<>();
+        node.getFormalList().accept(this);
+        docMap.put(node, formalList);
 
         //It's a terminal node, so there shouldn't be a need to call super.visit()
         numMethods += 1;
+        return null;
+    }
+
+    public Object visit(FormalList node) {
+        for (Iterator it = node.iterator(); it.hasNext(); )
+            ((Formal) it.next()).accept(this);
+        return null;
+    }
+
+    public Object visit(Formal node) {
+        formalList.add(node);
         return null;
     }
 

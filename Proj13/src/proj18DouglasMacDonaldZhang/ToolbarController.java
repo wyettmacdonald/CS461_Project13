@@ -31,8 +31,7 @@ import javafx.geometry.Side;
 import javafx.scene.control.Alert;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.StyledTextArea;
-import proj18DouglasMacDonaldZhang.bantam.ast.Method;
-import proj18DouglasMacDonaldZhang.bantam.ast.Program;
+import proj18DouglasMacDonaldZhang.bantam.ast.*;
 import proj18DouglasMacDonaldZhang.bantam.codegenmips.MethodCollectorVisitor;
 import proj18DouglasMacDonaldZhang.bantam.parser.Parser;
 import proj18DouglasMacDonaldZhang.bantam.print.PrintVisitor;
@@ -52,6 +51,7 @@ import proj18DouglasMacDonaldZhang.bantam.codegenmips.MipsCodeGenerator;
 import proj18DouglasMacDonaldZhang.bantam.util.Error;
 
 
+import javax.swing.text.Position;
 import java.io.File;
 import java.io.BufferedReader;
 import java.io.*;
@@ -267,9 +267,45 @@ public class ToolbarController {
         }).start();
     }
 
+    public void handleDocHeaders() {
+        if(ast == null) {
+            createErrorDialog("Please Parse first", "Please parse for the AST");
+            return;
+        }
+        CodeArea codeArea = this.codeTabPane.getCodeArea();
+        FindMethodsVisitor methodCollectorVisitor = new FindMethodsVisitor();
+        Map<String, Integer> methodMap = methodCollectorVisitor.getMethodsMap(ast);
+        Map<Method, ArrayList<Formal>> docMap = methodCollectorVisitor.getDocMap();
+        ArrayList<Integer> methodArray = new ArrayList<>();
+        for (Integer i : methodMap.values()) { //left this because i didnt know if we wanted to use lineNums
+            methodArray.add(i);
+        }
+        int curLineNum = codeArea.getCaretSelectionBind().getParagraphIndex();
+        System.out.println("Position: " + curLineNum);
+        if(!methodArray.contains(curLineNum + 1)) {
+            createErrorDialog("Please Select A Method Line", "Select a line with a method");
+            return;
+        }
+        Method theMethod = null;
+        String docString = "";
+        for(Method method: docMap.keySet()) {
+            if(method.getLineNum() == curLineNum + 1) {
+                theMethod = method;
+            }
+        }
+        for(Formal formal: docMap.get(theMethod)) {
+            docString += "\n\t* @param " + formal.getName();
+        }
+        if(!theMethod.getReturnType().equals("void")) {
+            docString += "\n\t* return";
+        }
+        // cannot get the correct tabbing so currently have one tab hardcoded
+        this.codeTabPane.getCodeArea().insertText(curLineNum - 1, 0,  "\t/**\n\t*" + docString + "\n\t*/\n");
+    }
+
     public void handlePrevError() {
         if(currentErrorHandler == null) {
-            createErrorDialog("Find Errors", "No error handler");
+            createErrorDialog("No Errors", "There are no errors to find");
             return;
         }
         ArrayList<Integer> errorArray = new ArrayList<>();
@@ -277,23 +313,19 @@ public class ToolbarController {
             System.out.println("Error " + err.getLineNum());
             errorArray.add(err.getLineNum());
         }
+        Collections.sort(errorArray);
         errorCounter--;
-//        if(errorCounter >= errorArray.size()) {
-//            errorCounter = 0;
-//        }
         if(errorCounter < 0) {
             errorCounter = errorArray.size() - 1;
         }
-//        System.out.println(errorArray.toString());
         StyledTextArea textArea = codeTabPane.getCodeArea();
         textArea.moveTo(errorArray.get(errorCounter) - 1, 0);
-//        textArea.moveTo(0);
         textArea.requestFollowCaret();
     }
 
     public void handleNextError() {
         if(currentErrorHandler == null) {
-            createErrorDialog("Find Errors", "No error handler");
+            createErrorDialog("No Errors", "There are no errors to find");
             return;
         }
         ArrayList<Integer> errorArray = new ArrayList<>();
@@ -301,18 +333,17 @@ public class ToolbarController {
             System.out.println("Error " + err.getLineNum());
             errorArray.add(err.getLineNum());
         }
-        errorCounter++;
+        Collections.sort(errorArray);
         if(errorCounter >= errorArray.size()) {
             errorCounter = 0;
         }
         if(errorCounter < 0) {
             errorCounter = errorArray.size() - 1;
         }
-//        System.out.println(errorArray.toString());
         StyledTextArea textArea = codeTabPane.getCodeArea();
         textArea.moveTo(errorArray.get(errorCounter) - 1, 0);
-//        textArea.moveTo(0);
         textArea.requestFollowCaret();
+        errorCounter++;
     }
 
     public void handlePrevMethod() {
@@ -320,25 +351,20 @@ public class ToolbarController {
             createErrorDialog("Please Parse first", "Please parse for the AST");
             return;
         }
-            FindMethodsVisitor methodCollectorVisitor = new FindMethodsVisitor();
-            Map<String, Integer> methodMap = methodCollectorVisitor.getMethodsMap(ast);
-            ArrayList<Integer> methodArray = new ArrayList<>();
-            for (Integer i : methodMap.values()) { //left this because i didnt know if we wanted to use lineNums
-                //or keep track of which method number like this
-//                System.out.println("Error " + err.getLineNum());
-//                System.out.println(i);
-                methodArray.add(i);
-            }
-            Collections.sort(methodArray);
-            methodCounter--;
-            if (methodCounter < 0) {
-                methodCounter = methodArray.size() - 1;
-            }
-//        System.out.println(errorArray.toString());
-            StyledTextArea textArea = codeTabPane.getCodeArea();
-            textArea.moveTo(methodArray.get(methodCounter) - 1, 0);
-//        textArea.moveTo(0);
-            textArea.requestFollowCaret();
+        FindMethodsVisitor methodCollectorVisitor = new FindMethodsVisitor();
+        Map<String, Integer> methodMap = methodCollectorVisitor.getMethodsMap(ast);
+        ArrayList<Integer> methodArray = new ArrayList<>();
+        for (Integer i : methodMap.values()) { //left this because i didnt know if we wanted to use lineNums
+            methodArray.add(i);
+        }
+        Collections.sort(methodArray);
+        methodCounter--;
+        if (methodCounter < 0) {
+            methodCounter = methodArray.size() - 1;
+        }
+        StyledTextArea textArea = codeTabPane.getCodeArea();
+        textArea.moveTo(methodArray.get(methodCounter) - 1, 0);
+        textArea.requestFollowCaret();
     }
 
     public void handleNextMethod() {
@@ -347,30 +373,24 @@ public class ToolbarController {
             createErrorDialog("Please Parse first", "Please parse for the AST");
             return;
         }
-            FindMethodsVisitor methodCollectorVisitor = new FindMethodsVisitor();
-            Map<String, Integer> methodMap = methodCollectorVisitor.getMethodsMap(ast);
-            ArrayList<Integer> methodArray = new ArrayList<>();
-            for (Integer i : methodMap.values()) { //left this because i didnt know if we wanted to use lineNums
-                //or keep track of which method number like this
-//                System.out.println("Error " + err.getLineNum());
-//                System.out.println(i);
-                methodArray.add(i);
-            }
-            Collections.sort(methodArray);
-            methodArray.toString();
-//            methodArray.sort();
-            methodCounter++;
-            if (methodCounter >= methodArray.size()) {
-                methodCounter = 0;
-            }
-            if (methodCounter < 0) {
-                methodCounter = methodArray.size() - 1;
-            }
-//        System.out.println(errorArray.toString());
-            StyledTextArea textArea = codeTabPane.getCodeArea();
-            textArea.moveTo(methodArray.get(methodCounter) - 1, 0);
-//        textArea.moveTo(0);
-            textArea.requestFollowCaret();
+        FindMethodsVisitor methodCollectorVisitor = new FindMethodsVisitor();
+        Map<String, Integer> methodMap = methodCollectorVisitor.getMethodsMap(ast);
+        ArrayList<Integer> methodArray = new ArrayList<>();
+        for (Integer i : methodMap.values()) { //left this because i didnt know if we wanted to use lineNums
+            methodArray.add(i);
+        }
+        Collections.sort(methodArray);
+        methodArray.toString();
+        if (methodCounter >= methodArray.size()) {
+            methodCounter = 0;
+        }
+        if (methodCounter < 0) {
+            methodCounter = methodArray.size() - 1;
+        }
+        StyledTextArea textArea = codeTabPane.getCodeArea();
+        textArea.moveTo(methodArray.get(methodCounter) - 1, 0);
+        textArea.requestFollowCaret();
+        methodCounter++;
     }
 
     /**

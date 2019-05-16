@@ -77,6 +77,7 @@ public class MasterController {
     @FXML private Button findUsesButton;
     @FXML private Button findUnusedButton;
     @FXML private Button suggestNamesButton;
+    @FXML private Button headerDocButton;
     @FXML private Button prevErrorButton;
     @FXML private Button nextErrorButton;
     @FXML private Button prevMethodButton;
@@ -161,6 +162,7 @@ public class MasterController {
 //            this.findUnusedButton.setDisable(false);
 //            this.suggestNamesButton.setDisable(false);
             this.prettyPrintButton.setDisable(false);
+            this.headerDocButton.setDisable(false);
             this.prevErrorButton.setDisable(false);
             this.nextErrorButton.setDisable(false);
             this.prevMethodButton.setDisable(false);
@@ -223,6 +225,7 @@ public class MasterController {
 //        this.suggestNamesButton.setDisable(true);
         this.compileButton.setDisable(true);
         this.prettyPrintButton.setDisable(true);
+        this.headerDocButton.setDisable(true);
         this.prevErrorButton.setDisable(true);
         this.nextErrorButton.setDisable(true);
         this.prevMethodButton.setDisable(true);
@@ -244,6 +247,7 @@ public class MasterController {
 //        this.suggestNamesButton.setDisable(false);
         this.compileButton.setDisable(false);
         this.prettyPrintButton.setDisable(false);
+        this.headerDocButton.setDisable(false);
         this.prevErrorButton.setDisable(false);
         this.nextErrorButton.setDisable(false);
         this.prevMethodButton.setDisable(false);
@@ -341,6 +345,9 @@ public class MasterController {
      */
     @FXML
     public void handleSelectAll() { editController.handleSelectAll(); }
+
+    @FXML
+    public void handleTab() { editController.handleTab(); }
 
     /**
      * Handler for the "Entab" menu item in the "Edit" menu.
@@ -651,6 +658,11 @@ public class MasterController {
         //I don't want it to ask for it to be saved (because it's probably semantically incorrect at that point)
         //So not running handleScanOrScanParse here
         toolbarController.handleScanOrScanParse("semanticCheck", false, "suggestions");
+    }
+
+    @FXML
+    public void handleDocHeaders(Event event) {
+        toolbarController.handleDocHeaders();
     }
 
     @FXML

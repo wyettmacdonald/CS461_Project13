@@ -65,6 +65,9 @@ class Mainee extends Parent{
 
 	}
 	
+	int testFunction(int b) {
+		return 4;
+	}
 
 	void g(){
 		blah();

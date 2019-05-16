@@ -21,10 +21,11 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import org.fxmisc.richtext.CodeArea;
+import proj18DouglasMacDonaldZhang.bantam.ast.Program;
+import proj18DouglasMacDonaldZhang.bantam.parser.Parser;
+import proj18DouglasMacDonaldZhang.bantam.semant.FindMethodsVisitor;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * This is the controller class for all of the edit functions
@@ -110,6 +111,36 @@ public class EditController {
         if (codeArea != null) {
             codeArea.selectAll();
         }
+    }
+
+    public void handleTab() {
+        Dialog<ButtonType> tabDialog = new Dialog<>();
+        tabDialog.setTitle("Set Tab Width");
+
+        ButtonType enter = new ButtonType("Enter");
+        tabDialog.getDialogPane().getButtonTypes().addAll(enter, ButtonType.CANCEL);
+        GridPane gridPane = new GridPane();
+
+        gridPane.setHgap(10);
+        gridPane.setVgap(10);
+        gridPane.setPadding(new Insets(20, 150, 10, 10));
+
+        TextField tabNum = new TextField();
+
+        gridPane.add(new Label("Number of spaces:"), 0, 0);
+        gridPane.add(tabNum, 1, 0);
+        tabDialog.getDialogPane().setContent(gridPane);
+
+        final Button tabButton = (Button) tabDialog.getDialogPane().lookupButton(enter);
+        tabButton.addEventFilter(ActionEvent.ACTION, event -> {
+            this.codeTabPane.getCodeArea();
+//            this.codeTabPane.setTabMaxWidth(Double.parseDouble(tabNum.getText()));
+            event.consume();
+        });
+
+        tabDialog.showAndWait();
+//        this.codeTabPane.setTabMaxWidth((double) numTabs);
+//        CodeArea codeArea = this.codeTabPane.getCodeArea();
     }
 
     /**
