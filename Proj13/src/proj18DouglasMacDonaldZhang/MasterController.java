@@ -541,6 +541,11 @@ public class MasterController {
 //        this.findUsesButton.setDisable(true);
 //        this.findUnusedButton.setDisable(true);
 //        this.suggestNamesButton.setDisable(true);
+        this.headerDocButton.setDisable(true);
+        this.prevErrorButton.setDisable(true);
+        this.nextErrorButton.setDisable(true);
+        this.prevMethodButton.setDisable(true);
+        this.nextMethodButton.setDisable(true);
         this.compileButton.setDisable(true);
 
     }
